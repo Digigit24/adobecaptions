@@ -889,28 +889,96 @@
             const lowerWord = word.toLowerCase();
             const suggestions = [];
 
-            // Direct match
+            // 1. Direct match - check if entire word exists
             if (transliterationMap[lowerWord]) {
                 transliterationMap[lowerWord].forEach(hindi => {
                     suggestions.push({ hindi, latin: lowerWord });
                 });
             }
 
-            // Partial matches for longer words
-            for (let len = Math.max(3, lowerWord.length); len > 0; len--) {
-                for (let i = 0; i <= lowerWord.length - len; i++) {
-                    const substr = lowerWord.substring(i, i + len);
-                    if (transliterationMap[substr] && suggestions.length < 10) {
-                        transliterationMap[substr].forEach(hindi => {
-                            if (!suggestions.find(s => s.hindi === hindi)) {
-                                suggestions.push({ hindi, latin: substr });
-                            }
+            // 2. Build word by breaking into syllables (greedy longest match)
+            function buildWordFromSyllables(word) {
+                const results = [];
+
+                function buildRecursive(remaining, builtHindi, builtLatin) {
+                    if (remaining.length === 0) {
+                        if (builtHindi) {
+                            results.push({ hindi: builtHindi, latin: builtLatin });
+                        }
+                        return;
+                    }
+
+                    // Try matching from longest to shortest syllable
+                    let matched = false;
+                    for (let len = Math.min(remaining.length, 6); len > 0; len--) {
+                        const syllable = remaining.substring(0, len);
+                        if (transliterationMap[syllable]) {
+                            // Found a match, try all variations
+                            transliterationMap[syllable].forEach(hindiChar => {
+                                buildRecursive(
+                                    remaining.substring(len),
+                                    builtHindi + hindiChar,
+                                    builtLatin + syllable
+                                );
+                            });
+                            matched = true;
+                            break; // Use longest match (greedy)
+                        }
+                    }
+
+                    // If no match found, skip this character
+                    if (!matched && remaining.length > 0) {
+                        buildRecursive(
+                            remaining.substring(1),
+                            builtHindi + remaining[0],
+                            builtLatin + remaining[0]
+                        );
+                    }
+                }
+
+                buildRecursive(word, '', '');
+                return results;
+            }
+
+            // Build word from syllables if not a direct match
+            if (suggestions.length === 0) {
+                const syllableResults = buildWordFromSyllables(lowerWord);
+                syllableResults.forEach(result => {
+                    if (!suggestions.find(s => s.hindi === result.hindi)) {
+                        suggestions.push(result);
+                    }
+                });
+            }
+
+            // 3. Partial progressive match - show what's been typed so far
+            if (suggestions.length === 0) {
+                // Try to match prefixes
+                for (let len = lowerWord.length; len > 0; len--) {
+                    const prefix = lowerWord.substring(0, len);
+                    if (transliterationMap[prefix]) {
+                        transliterationMap[prefix].forEach(hindi => {
+                            const remaining = lowerWord.substring(len);
+                            suggestions.push({
+                                hindi: hindi + remaining,
+                                latin: prefix + (remaining ? ' + ' + remaining : '')
+                            });
                         });
+                        if (suggestions.length > 0) break;
                     }
                 }
             }
 
-            return suggestions.slice(0, 8);
+            // Remove duplicates and limit
+            const unique = [];
+            const seen = new Set();
+            suggestions.forEach(s => {
+                if (!seen.has(s.hindi)) {
+                    seen.add(s.hindi);
+                    unique.push(s);
+                }
+            });
+
+            return unique.slice(0, 8);
         }
 
         // Show transliteration dropdown
@@ -1231,16 +1299,20 @@
                         ${wordHTML}
                     </div>
                     <div class="caption-actions">
-                        <button class="btn-small btn-edit" onclick="editCaption(${index})">✏️ Edit</button>
-                        <button class="btn-small btn-delete" onclick="deleteCaption(${index})">🗑️</button>
+                        <button class="btn-small btn-edit" onclick="editCaption(event, ${index})">✏️ Edit</button>
+                        <button class="btn-small btn-delete" onclick="deleteCaption(event, ${index})">🗑️</button>
                     </div>
                 `;
                 captionsContainer.appendChild(item);
 
                 item.addEventListener('click', (e) => {
+                    // Don't seek if clicking on interactive elements
                     if (!e.target.classList.contains('timestamp-input') &&
                         !e.target.classList.contains('btn-delete') &&
-                        !e.target.classList.contains('btn-edit')) {
+                        !e.target.classList.contains('btn-edit') &&
+                        !e.target.classList.contains('caption-text') &&
+                        !e.target.classList.contains('caption-text-display') &&
+                        e.target.tagName !== 'TEXTAREA') {
                         seekToCaption(index);
                     }
                 });
@@ -1268,14 +1340,22 @@
             }
         }
 
-        function editCaption(index) {
+        function editCaption(event, index) {
+            // Prevent video from seeking when clicking edit button
+            if (event) {
+                event.stopPropagation();
+            }
+
             const item = document.querySelector(`.caption-item[data-index="${index}"]`);
             const displayDiv = item.querySelector('.caption-text-display');
             displayDiv.outerHTML = `<textarea class="caption-text" data-index="${index}">${captions[index].text}</textarea>`;
 
             const editBtn = item.querySelector('.btn-edit');
             editBtn.textContent = '💾';
-            editBtn.onclick = () => saveCaption(index);
+            editBtn.onclick = (e) => {
+                e.stopPropagation();
+                saveCaption(index);
+            };
 
             // Attach transliteration to the new textarea
             const textarea = item.querySelector('.caption-text');
@@ -1379,7 +1459,12 @@
             statusBar.textContent = 'Modified - Click Save';
         }
 
-        function deleteCaption(index) {
+        function deleteCaption(event, index) {
+            // Prevent video from seeking when clicking delete button
+            if (event) {
+                event.stopPropagation();
+            }
+
             if (confirm(`Delete caption #${captions[index].index}?`)) {
                 captions.splice(index, 1);
                 renderCaptions();

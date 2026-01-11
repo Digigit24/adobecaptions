@@ -922,6 +922,10 @@
             // Update first caption
             captions[index].text = firstHalf;
             captions[index].end = secondsToTimestamp(splitTime);
+            // Clear styled text so word-by-word highlighting works
+            delete captions[index].styledText;
+            delete captions[index].color;
+            delete captions[index].fontFamily;
 
             // Create second caption
             const newCaption = {
@@ -929,6 +933,7 @@
                 start: secondsToTimestamp(splitTime),
                 end: caption.end,
                 text: secondHalf
+                // No styledText - will rebuild word-by-word spans
             };
 
             // Insert new caption after current one

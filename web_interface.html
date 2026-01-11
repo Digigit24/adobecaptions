@@ -532,6 +532,69 @@
             color: white;
         }
 
+        /* Transliteration Dropdown */
+        .transliteration-dropdown {
+            position: absolute;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10000;
+            display: none;
+            min-width: 200px;
+        }
+
+        .transliteration-dropdown.show {
+            display: block;
+        }
+
+        .transliteration-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .transliteration-item:last-child {
+            border-bottom: none;
+        }
+
+        .transliteration-item:hover,
+        .transliteration-item.selected {
+            background: #667eea;
+            color: white;
+        }
+
+        .transliteration-word {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .transliteration-latin {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .transliteration-hint {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            display: none;
+            z-index: 10001;
+        }
+
+        .transliteration-hint.show {
+            display: block;
+        }
+
         /* Status Bar */
         .status-bar {
             background: #333;
@@ -625,6 +688,9 @@
                             <option value="en">English</option>
                             <option value="hi">Hindi (हिंदी)</option>
                             <option value="mr">Marathi (मराठी)</option>
+                            <option value="hi-en">Hinglish (Hindi + English)</option>
+                            <option value="mr-en">English + Marathi</option>
+                            <option value="mixed">Mixed (All Languages)</option>
                         </select>
                     </div>
                     <div class="setting-group">
@@ -664,6 +730,14 @@
         </div>
     </div>
 
+    <!-- Transliteration Dropdown -->
+    <div class="transliteration-dropdown" id="transliterationDropdown"></div>
+
+    <!-- Transliteration Hint -->
+    <div class="transliteration-hint" id="transliterationHint">
+        💡 Type in English to get Hindi/Marathi suggestions
+    </div>
+
     <script>
         let currentJobId = null;
         let currentFile = null;
@@ -698,6 +772,299 @@
         const timeDisplay = document.getElementById('timeDisplay');
         const videoProgress = document.getElementById('videoProgress');
         const videoProgressFill = document.getElementById('videoProgressFill');
+
+        // Transliteration Elements
+        const transliterationDropdown = document.getElementById('transliterationDropdown');
+        const transliterationHint = document.getElementById('transliterationHint');
+        const languageSelect = document.getElementById('language');
+
+        // Transliteration Library - Hindi/Marathi Mapping
+        const transliterationMap = {
+            // Vowels
+            'a': ['अ', 'आ'], 'aa': ['आ'], 'aaa': ['आ'],
+            'i': ['इ', 'ई'], 'ii': ['ई'], 'ee': ['ई'],
+            'u': ['उ', 'ऊ'], 'uu': ['ऊ'], 'oo': ['ऊ'],
+            'e': ['ए', 'ऐ'], 'ai': ['ऐ'], 'ei': ['ऐ'],
+            'o': ['ओ', 'औ'], 'au': ['औ'], 'ou': ['औ'],
+
+            // Consonants
+            'ka': ['का', 'क'], 'kaa': ['का'], 'ki': ['कि', 'की'], 'kii': ['की'], 'ku': ['कु', 'कू'], 'kuu': ['कू'],
+            'ke': ['के', 'कै'], 'kai': ['कै'], 'ko': ['को', 'कौ'], 'kau': ['कौ'],
+            'k': ['क'], 'kh': ['ख'], 'kha': ['खा'], 'khi': ['खी'], 'khu': ['खु'], 'khe': ['खे'], 'kho': ['खो'],
+
+            'ga': ['गा', 'ग'], 'gaa': ['गा'], 'gi': ['गि', 'गी'], 'gii': ['गी'], 'gu': ['गु', 'गू'], 'guu': ['गू'],
+            'ge': ['गे', 'गै'], 'gai': ['गै'], 'go': ['गो', 'गौ'], 'gau': ['गौ'],
+            'g': ['ग'], 'gh': ['घ'], 'gha': ['घा'], 'ghi': ['घी'], 'ghu': ['घु'], 'ghe': ['घे'], 'gho': ['घो'],
+
+            'cha': ['चा', 'च'], 'chaa': ['चा'], 'chi': ['चि', 'ची'], 'chii': ['ची'], 'chu': ['चु', 'चू'], 'chuu': ['चू'],
+            'che': ['चे', 'चै'], 'chai': ['चै'], 'cho': ['चो', 'चौ'], 'chau': ['चौ'],
+            'ch': ['च'], 'chh': ['छ'], 'chha': ['छा'], 'chhi': ['छी'], 'chhu': ['छु'], 'chhe': ['छे'], 'chho': ['छो'],
+
+            'ja': ['जा', 'ज'], 'jaa': ['जा'], 'ji': ['जि', 'जी'], 'jii': ['जी'], 'ju': ['जु', 'जू'], 'juu': ['जू'],
+            'je': ['जे', 'जै'], 'jai': ['जै'], 'jo': ['जो', 'जौ'], 'jau': ['जौ'],
+            'j': ['ज'], 'jh': ['झ'], 'jha': ['झा'], 'jhi': ['झी'], 'jhu': ['झु'], 'jhe': ['झे'], 'jho': ['झो'],
+
+            'ta': ['टा', 'ता', 'ट', 'त'], 'taa': ['टा', 'ता'], 'ti': ['टि', 'ती', 'ति'], 'tii': ['टी', 'ती'],
+            'tu': ['टु', 'तु', 'टू', 'तू'], 'tuu': ['टू', 'तू'], 'te': ['टे', 'ते', 'टै', 'तै'], 'to': ['टो', 'तो', 'टौ', 'तौ'],
+            't': ['त', 'ट'], 'th': ['थ', 'ठ'], 'tha': ['था', 'ठा'], 'thi': ['थी', 'ठी'], 'thu': ['थु', 'ठु'],
+            'the': ['थे', 'ठे'], 'tho': ['थो', 'ठो'],
+
+            'da': ['डा', 'दा', 'ड', 'द'], 'daa': ['डा', 'दा'], 'di': ['डि', 'दि', 'डी', 'दी'], 'dii': ['डी', 'दी'],
+            'du': ['डु', 'दु', 'डू', 'दू'], 'duu': ['डू', 'दू'], 'de': ['डे', 'दे', 'डै', 'दै'], 'do': ['डो', 'दो', 'डौ', 'दौ'],
+            'd': ['द', 'ड'], 'dh': ['ध', 'ढ'], 'dha': ['धा', 'ढा'], 'dhi': ['धी', 'ढी'], 'dhu': ['धु', 'ढु'],
+            'dhe': ['धे', 'ढे'], 'dho': ['धो', 'ढो'],
+
+            'na': ['ना', 'न', 'णा', 'ण'], 'naa': ['ना', 'णा'], 'ni': ['नि', 'नी', 'णि', 'णी'], 'nii': ['नी', 'णी'],
+            'nu': ['नु', 'नू', 'णु', 'णू'], 'nuu': ['नू', 'णू'], 'ne': ['ने', 'नै', 'णे', 'णै'], 'no': ['नो', 'नौ', 'णो', 'णौ'],
+            'n': ['न', 'ण'],
+
+            'pa': ['पा', 'प'], 'paa': ['पा'], 'pi': ['पि', 'पी'], 'pii': ['पी'], 'pu': ['पु', 'पू'], 'puu': ['पू'],
+            'pe': ['पे', 'पै'], 'pai': ['पै'], 'po': ['पो', 'पौ'], 'pau': ['पौ'],
+            'p': ['प'], 'ph': ['फ'], 'pha': ['फा'], 'phi': ['फी'], 'phu': ['फु'], 'phe': ['फे'], 'pho': ['फो'],
+
+            'ba': ['बा', 'ब'], 'baa': ['बा'], 'bi': ['बि', 'बी'], 'bii': ['बी'], 'bu': ['बु', 'बू'], 'buu': ['बू'],
+            'be': ['बे', 'बै'], 'bai': ['बै'], 'bo': ['बो', 'बौ'], 'bau': ['बौ'],
+            'b': ['ब'], 'bh': ['भ'], 'bha': ['भा'], 'bhi': ['भी'], 'bhu': ['भु'], 'bhe': ['भे'], 'bho': ['भो'],
+
+            'ma': ['मा', 'म'], 'maa': ['मा'], 'mi': ['मि', 'मी'], 'mii': ['मी'], 'mu': ['मु', 'मू'], 'muu': ['मू'],
+            'me': ['मे', 'मै'], 'mai': ['मै'], 'mo': ['मो', 'मौ'], 'mau': ['मौ'],
+            'm': ['म'],
+
+            'ya': ['या', 'य'], 'yaa': ['या'], 'yi': ['यि', 'यी'], 'yii': ['यी'], 'yu': ['यु', 'यू'], 'yuu': ['यू'],
+            'ye': ['ये', 'यै'], 'yai': ['यै'], 'yo': ['यो', 'यौ'], 'yau': ['यौ'],
+            'y': ['य'],
+
+            'ra': ['रा', 'र'], 'raa': ['रा'], 'ri': ['रि', 'री'], 'rii': ['री'], 'ru': ['रु', 'रू'], 'ruu': ['रू'],
+            're': ['रे', 'रै'], 'rai': ['रै'], 'ro': ['रो', 'रौ'], 'rau': ['रौ'],
+            'r': ['र'],
+
+            'la': ['ला', 'ल'], 'laa': ['ला'], 'li': ['लि', 'ली'], 'lii': ['ली'], 'lu': ['लु', 'लू'], 'luu': ['लू'],
+            'le': ['ले', 'लै'], 'lai': ['लै'], 'lo': ['लो', 'लौ'], 'lau': ['लौ'],
+            'l': ['ल'],
+
+            'va': ['वा', 'व'], 'vaa': ['वा'], 'vi': ['वि', 'वी'], 'vii': ['वी'], 'vu': ['वु', 'वू'], 'vuu': ['वू'],
+            've': ['वे', 'वै'], 'vai': ['वै'], 'vo': ['वो', 'वौ'], 'vau': ['वौ'],
+            'v': ['व'], 'w': ['व'],
+
+            'sha': ['शा', 'श'], 'shaa': ['शा'], 'shi': ['शि', 'शी'], 'shii': ['शी'], 'shu': ['शु', 'शू'], 'shuu': ['शू'],
+            'she': ['शे', 'शै'], 'shai': ['शै'], 'sho': ['शो', 'शौ'], 'shau': ['शौ'],
+            'sh': ['श'],
+
+            'sa': ['सा', 'स'], 'saa': ['सा'], 'si': ['सि', 'सी'], 'sii': ['सी'], 'su': ['सु', 'सू'], 'suu': ['सू'],
+            'se': ['से', 'सै'], 'sai': ['सै'], 'so': ['सो', 'सौ'], 'sau': ['सौ'],
+            's': ['स'],
+
+            'ha': ['हा', 'ह'], 'haa': ['हा'], 'hi': ['हि', 'ही'], 'hii': ['ही'], 'hu': ['हु', 'हू'], 'huu': ['हू'],
+            'he': ['हे', 'है'], 'hai': ['है'], 'ho': ['हो', 'हौ'], 'hau': ['हौ'],
+            'h': ['ह'],
+
+            // Additional common combinations
+            'kya': ['क्या'], 'kyu': ['क्यू'], 'kyo': ['क्यो'],
+            'gya': ['ज्ञा'], 'gyan': ['ज्ञान'], 'gyaan': ['ज्ञान'],
+            'tra': ['त्रा'], 'tri': ['त्री'], 'tru': ['त्रू'],
+            'kshe': ['क्षे'], 'ksha': ['क्षा'], 'kshi': ['क्षी'], 'kshu': ['क्षु'],
+            'shr': ['श्र'], 'shri': ['श्री'], 'shree': ['श्री'],
+
+            // Common words
+            'namaste': ['नमस्ते'], 'namaskar': ['नमस्कार'], 'dhanyavad': ['धन्यवाद'], 'shukriya': ['शुक्रिया'],
+            'haan': ['हाँ'], 'ha': ['हाँ', 'हा'], 'nahi': ['नहीं'], 'nahin': ['नहीं'],
+            'kya': ['क्या'], 'kaise': ['कैसे'], 'kahan': ['कहाँ'], 'kab': ['कब'], 'kaun': ['कौन'],
+            'main': ['मैं'], 'mein': ['में'], 'tum': ['तुम'], 'aap': ['आप'],
+            'yeh': ['यह'], 'ye': ['यह', 'ये'], 'woh': ['वह'], 'wo': ['वह', 'वो'],
+            'hai': ['है'], 'hain': ['हैं'], 'tha': ['था'], 'thi': ['थी'], 'the': ['थे'],
+            'aur': ['और'], 'ya': ['या'], 'lekin': ['लेकिन'], 'par': ['पर'],
+            'ek': ['एक'], 'do': ['दो'], 'teen': ['तीन'], 'char': ['चार'], 'paanch': ['पांच']
+        };
+
+        // Transliteration state
+        let currentTranslitInput = null;
+        let currentTranslitWord = '';
+        let currentTranslitWordStart = 0;
+        let selectedSuggestionIndex = 0;
+
+        // Get transliteration suggestions for a word
+        function getTransliterationSuggestions(word) {
+            if (!word) return [];
+
+            const lowerWord = word.toLowerCase();
+            const suggestions = [];
+
+            // Direct match
+            if (transliterationMap[lowerWord]) {
+                transliterationMap[lowerWord].forEach(hindi => {
+                    suggestions.push({ hindi, latin: lowerWord });
+                });
+            }
+
+            // Partial matches for longer words
+            for (let len = Math.max(3, lowerWord.length); len > 0; len--) {
+                for (let i = 0; i <= lowerWord.length - len; i++) {
+                    const substr = lowerWord.substring(i, i + len);
+                    if (transliterationMap[substr] && suggestions.length < 10) {
+                        transliterationMap[substr].forEach(hindi => {
+                            if (!suggestions.find(s => s.hindi === hindi)) {
+                                suggestions.push({ hindi, latin: substr });
+                            }
+                        });
+                    }
+                }
+            }
+
+            return suggestions.slice(0, 8);
+        }
+
+        // Show transliteration dropdown
+        function showTransliterationDropdown(suggestions, textarea) {
+            if (suggestions.length === 0) {
+                transliterationDropdown.classList.remove('show');
+                return;
+            }
+
+            // Build dropdown HTML
+            let html = '';
+            suggestions.forEach((suggestion, index) => {
+                const selected = index === selectedSuggestionIndex ? 'selected' : '';
+                html += `
+                    <div class="transliteration-item ${selected}" data-index="${index}">
+                        <div class="transliteration-word">${suggestion.hindi}</div>
+                        <div class="transliteration-latin">${suggestion.latin}</div>
+                    </div>
+                `;
+            });
+            transliterationDropdown.innerHTML = html;
+
+            // Position dropdown near cursor
+            const rect = textarea.getBoundingClientRect();
+            transliterationDropdown.style.left = rect.left + 'px';
+            transliterationDropdown.style.top = (rect.bottom + 5) + 'px';
+            transliterationDropdown.classList.add('show');
+
+            // Add click handlers
+            const items = transliterationDropdown.querySelectorAll('.transliteration-item');
+            items.forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    selectTransliteration(index, suggestions, textarea);
+                });
+            });
+        }
+
+        // Select a transliteration suggestion
+        function selectTransliteration(index, suggestions, textarea) {
+            if (index < 0 || index >= suggestions.length) return;
+
+            const suggestion = suggestions[index];
+            const text = textarea.value;
+            const beforeWord = text.substring(0, currentTranslitWordStart);
+            const afterWord = text.substring(currentTranslitWordStart + currentTranslitWord.length);
+
+            textarea.value = beforeWord + suggestion.hindi + afterWord;
+
+            // Move cursor after inserted text
+            const newCursorPos = beforeWord.length + suggestion.hindi.length;
+            textarea.setSelectionRange(newCursorPos, newCursorPos);
+
+            // Hide dropdown
+            transliterationDropdown.classList.remove('show');
+            currentTranslitWord = '';
+
+            // Update caption
+            textarea.focus();
+        }
+
+        // Navigate suggestions with arrow keys
+        function navigateSuggestions(direction, suggestions, textarea) {
+            if (suggestions.length === 0) return;
+
+            selectedSuggestionIndex += direction;
+            if (selectedSuggestionIndex < 0) selectedSuggestionIndex = suggestions.length - 1;
+            if (selectedSuggestionIndex >= suggestions.length) selectedSuggestionIndex = 0;
+
+            // Update UI
+            const items = transliterationDropdown.querySelectorAll('.transliteration-item');
+            items.forEach((item, index) => {
+                if (index === selectedSuggestionIndex) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // Attach transliteration to a textarea
+        function attachTransliteration(textarea) {
+            let suggestions = [];
+
+            textarea.addEventListener('input', (e) => {
+                const selectedLang = languageSelect.value;
+
+                // Only show transliteration for Hindi, Marathi, and mixed languages
+                if (!['hi', 'mr', 'hi-en', 'mr-en', 'mixed'].includes(selectedLang)) {
+                    transliterationDropdown.classList.remove('show');
+                    transliterationHint.classList.remove('show');
+                    return;
+                }
+
+                const cursorPos = textarea.selectionStart;
+                const text = textarea.value;
+
+                // Find current word
+                let wordStart = cursorPos - 1;
+                while (wordStart >= 0 && /[a-zA-Z]/.test(text[wordStart])) {
+                    wordStart--;
+                }
+                wordStart++;
+
+                let wordEnd = cursorPos;
+                while (wordEnd < text.length && /[a-zA-Z]/.test(text[wordEnd])) {
+                    wordEnd++;
+                }
+
+                const word = text.substring(wordStart, wordEnd);
+
+                if (word.length > 0 && /^[a-zA-Z]+$/.test(word)) {
+                    currentTranslitWord = word;
+                    currentTranslitWordStart = wordStart;
+                    currentTranslitInput = textarea;
+                    suggestions = getTransliterationSuggestions(word);
+                    selectedSuggestionIndex = 0;
+                    showTransliterationDropdown(suggestions, textarea);
+                    transliterationHint.classList.add('show');
+                } else {
+                    transliterationDropdown.classList.remove('show');
+                    transliterationHint.classList.remove('show');
+                }
+            });
+
+            textarea.addEventListener('keydown', (e) => {
+                const isDropdownVisible = transliterationDropdown.classList.contains('show');
+
+                if (!isDropdownVisible) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    navigateSuggestions(1, suggestions, textarea);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    navigateSuggestions(-1, suggestions, textarea);
+                } else if (e.key === 'Enter' || e.key === 'Tab') {
+                    if (suggestions.length > 0) {
+                        e.preventDefault();
+                        selectTransliteration(selectedSuggestionIndex, suggestions, textarea);
+                    }
+                } else if (e.key === 'Escape') {
+                    transliterationDropdown.classList.remove('show');
+                    transliterationHint.classList.remove('show');
+                }
+            });
+
+            // Hide dropdown on blur
+            textarea.addEventListener('blur', () => {
+                setTimeout(() => {
+                    transliterationDropdown.classList.remove('show');
+                    transliterationHint.classList.remove('show');
+                }, 200);
+            });
+        }
 
         // Drag and drop
         dropZone.addEventListener('click', () => fileInput.click());
@@ -909,6 +1276,11 @@
             const editBtn = item.querySelector('.btn-edit');
             editBtn.textContent = '💾';
             editBtn.onclick = () => saveCaption(index);
+
+            // Attach transliteration to the new textarea
+            const textarea = item.querySelector('.caption-text');
+            attachTransliteration(textarea);
+            textarea.focus();
         }
 
         function saveCaption(index) {

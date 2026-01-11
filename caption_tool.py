@@ -28,7 +28,11 @@ class CaptionTool:
     SUPPORTED_LANGUAGES = {
         'en': 'English',
         'hi': 'Hindi',
-        'mr': 'Marathi'
+        'mr': 'Marathi',
+        'hi-en': 'Hinglish (Hindi + English)',
+        'mr-en': 'English + Marathi',
+        'mixed': 'Mixed (All Languages)',
+        'auto': 'Auto-detect'
     }
 
     def __init__(self, model_size='base', device='cpu'):
@@ -117,7 +121,7 @@ class CaptionTool:
 
         Args:
             audio_path: Path to audio file
-            language: Language code ('en', 'hi', 'mr') or None for auto-detect
+            language: Language code ('en', 'hi', 'mr', 'hi-en', 'mr-en', 'mixed', 'auto') or None for auto-detect
 
         Returns:
             segments: List of transcription segments with timestamps
@@ -126,15 +130,21 @@ class CaptionTool:
         self.load_model()
 
         print(f"[3/3] Transcribing audio...")
-        if language:
-            print(f"    Language: {self.SUPPORTED_LANGUAGES.get(language, language)}")
+
+        # Handle mixed language scenarios
+        # For Hinglish, English+Marathi, or mixed languages, use None to let Whisper handle code-switching
+        whisper_language = None
+        if language in ['hi-en', 'mr-en', 'mixed', 'auto', None]:
+            whisper_language = None
+            print(f"    Language: {self.SUPPORTED_LANGUAGES.get(language, 'Auto-detect')} (multi-language mode)")
         else:
-            print(f"    Language: Auto-detect")
+            whisper_language = language
+            print(f"    Language: {self.SUPPORTED_LANGUAGES.get(language, language)}")
 
         try:
             segments, info = self.model.transcribe(
                 str(audio_path),
-                language=language,
+                language=whisper_language,
                 beam_size=5,
                 vad_filter=True,  # Voice Activity Detection
                 vad_parameters=dict(min_silence_duration_ms=500)

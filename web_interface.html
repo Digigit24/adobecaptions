@@ -11,57 +11,75 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        html, body {
             height: 100vh;
+            width: 100vw;
             overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
         .container {
             height: 100vh;
+            width: 100vw;
             display: flex;
             flex-direction: column;
             background: white;
+            overflow: hidden;
         }
 
         /* Compact Header */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px 20px;
+            padding: 8px 15px;
             text-align: center;
             flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 20px;
-            margin-bottom: 3px;
+            font-size: 16px;
+            margin-bottom: 2px;
         }
 
         .header p {
-            font-size: 12px;
+            font-size: 10px;
             opacity: 0.9;
         }
 
-        /* Main Content Area */
-        .main-content {
-            flex: 1;
+        /* Upload Screen Overlay */
+        .upload-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: white;
+            z-index: 1000;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
-        /* Settings - Collapsible */
+        .upload-overlay.hidden {
+            display: none;
+        }
+
+        .upload-content {
+            max-width: 600px;
+            width: 100%;
+        }
+
         .settings-panel {
             background: #f8f9fa;
             padding: 15px;
-            border-bottom: 2px solid #e0e0e0;
-            flex-shrink: 0;
-        }
-
-        .settings-panel.collapsed {
-            display: none;
+            border-radius: 10px;
+            margin-bottom: 20px;
         }
 
         .settings-row {
@@ -98,20 +116,20 @@
             margin-top: 3px;
         }
 
-        /* Drop Zone - Compact */
         .drop-zone {
             border: 2px dashed #ccc;
             border-radius: 10px;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
             cursor: pointer;
             background: #f8f9fa;
-            margin: 15px;
-            flex-shrink: 0;
+            margin-bottom: 20px;
+            transition: all 0.3s;
         }
 
-        .drop-zone.collapsed {
-            display: none;
+        .drop-zone:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
         }
 
         .drop-zone.loaded {
@@ -120,13 +138,14 @@
         }
 
         .drop-icon {
-            font-size: 40px;
+            font-size: 48px;
             margin-bottom: 10px;
         }
 
         .drop-text {
-            font-size: 14px;
+            font-size: 16px;
             color: #666;
+            margin-bottom: 5px;
         }
 
         .file-info {
@@ -134,19 +153,22 @@
             color: #999;
         }
 
-        /* Progress */
+        .upload-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
         .progress-section {
             display: none;
-            padding: 15px;
-            flex-shrink: 0;
+            margin-bottom: 20px;
         }
 
         .progress-bar {
-            height: 25px;
+            height: 30px;
             background: #e0e0e0;
-            border-radius: 12px;
+            border-radius: 15px;
             overflow: hidden;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .progress-fill {
@@ -158,41 +180,29 @@
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 12px;
+            font-size: 13px;
+            transition: width 0.3s;
         }
 
         .progress-message {
             text-align: center;
             color: #666;
-            font-size: 12px;
-        }
-
-        /* Buttons - Compact */
-        .buttons {
-            display: flex;
-            gap: 8px;
-            padding: 15px;
-            flex-shrink: 0;
-        }
-
-        .buttons.collapsed {
-            display: none;
+            font-size: 13px;
         }
 
         button {
-            flex: 1;
-            padding: 10px;
+            padding: 12px 24px;
             border: none;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         button:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         button:disabled {
@@ -203,11 +213,13 @@
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            flex: 1;
         }
 
         .btn-secondary {
             background: #f0f0f0;
             color: #333;
+            flex: 1;
         }
 
         .btn-success {
@@ -215,81 +227,122 @@
             color: white;
         }
 
-        .hidden {
-            display: none;
-        }
-
         input[type="file"] {
             display: none;
         }
 
-        /* Video Player & Editor - 100vh Layout */
-        .video-editor-container {
-            display: none;
-            flex: 1;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .video-editor-layout {
+        /* Action Bar */
+        .action-bar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 6px 15px;
             display: flex;
-            height: 100%;
-            gap: 15px;
-            padding: 15px;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
         }
 
-        /* Video Section - Left Side */
+        .action-bar.hidden {
+            display: none;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 11px;
+            border-radius: 5px;
+        }
+
+        /* Main Content - 100vh Video + Captions */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* Video Section - Left */
         .video-section {
             flex: 0 0 45%;
             display: flex;
             flex-direction: column;
+            background: #000;
+            position: relative;
             min-width: 0;
         }
 
-        .video-player {
+        .video-container {
             flex: 1;
-            border-radius: 10px;
-            background: #000;
+            position: relative;
             overflow: hidden;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        .video-player video {
-            flex: 1;
+        .video-container video {
             width: 100%;
             height: 100%;
             object-fit: contain;
+            cursor: pointer;
+        }
+
+        /* Video Overlay Controls */
+        .video-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+            padding: 40px 15px 15px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .video-container:hover .video-overlay,
+        .video-overlay.show {
+            opacity: 1;
         }
 
         .video-controls {
-            background: #333;
-            padding: 10px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
+            gap: 10px;
         }
 
-        .play-pause-btn {
-            background: #667eea;
+        .play-pause-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(102, 126, 234, 0.9);
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            font-size: 32px;
             cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
         }
 
-        .play-pause-btn:hover {
-            background: #5568d3;
+        .video-container:hover .play-pause-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .video-container.paused .play-pause-overlay {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .time-display {
             color: white;
-            font-size: 11px;
+            font-size: 12px;
             font-family: monospace;
             white-space: nowrap;
         }
@@ -297,7 +350,7 @@
         .video-progress {
             flex: 1;
             height: 5px;
-            background: #555;
+            background: rgba(255,255,255,0.3);
             border-radius: 3px;
             cursor: pointer;
             position: relative;
@@ -311,63 +364,53 @@
             transition: width 0.1s linear;
         }
 
-        /* Editor Section - Right Side */
+        /* Caption Editor - Right */
         .editor-section {
             flex: 1;
             display: flex;
             flex-direction: column;
+            background: white;
+            border-left: 1px solid #e0e0e0;
             min-width: 0;
             overflow: hidden;
         }
 
         .editor-header {
             background: #f8f9fa;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #e0e0e0;
             flex-shrink: 0;
         }
 
         .editor-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
+            color: #333;
         }
 
         .caption-count {
             color: #666;
-            font-size: 11px;
+            font-size: 10px;
+            margin-top: 2px;
         }
 
-        .btn-small {
-            padding: 5px 10px;
-            font-size: 11px;
-            border-radius: 5px;
-        }
-
-        /* Captions Container - Scrollable */
         .captions-container {
             flex: 1;
             overflow-y: auto;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
             padding: 10px;
         }
 
         .captions-container::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .captions-container::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 4px;
         }
 
         .captions-container::-webkit-scrollbar-thumb {
             background: #888;
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         .captions-container::-webkit-scrollbar-thumb:hover {
@@ -377,9 +420,9 @@
         /* Caption Item - Compact */
         .caption-item {
             background: #f8f9fa;
-            padding: 8px;
-            border-radius: 6px;
-            margin-bottom: 8px;
+            padding: 6px 8px;
+            border-radius: 5px;
+            margin-bottom: 6px;
             border-left: 3px solid #ccc;
             transition: all 0.2s;
             cursor: pointer;
@@ -391,19 +434,19 @@
 
         .caption-item:hover {
             border-left-color: #667eea;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
         }
 
         .caption-item.active {
             border-left-color: #667eea;
             background: #e8f0ff !important;
-            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
         }
 
         .caption-header {
             display: flex;
-            gap: 6px;
-            margin-bottom: 6px;
+            gap: 5px;
+            margin-bottom: 5px;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -411,73 +454,72 @@
         .caption-index {
             font-weight: 600;
             color: #667eea;
-            min-width: 30px;
-            font-size: 11px;
+            min-width: 25px;
+            font-size: 10px;
         }
 
         .caption-item.active .caption-index {
-            color: #4556c7;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .timestamp-input {
-            padding: 4px 6px;
+            padding: 3px 5px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 3px;
             font-family: monospace;
-            font-size: 10px;
-            width: 100px;
+            font-size: 9px;
+            width: 95px;
         }
 
         .timestamp-separator {
             color: #999;
-            font-size: 10px;
+            font-size: 9px;
+        }
+
+        .caption-text-display {
+            padding: 5px;
+            font-size: 11px;
+            line-height: 1.5;
+            min-height: 35px;
+            word-wrap: break-word;
         }
 
         .caption-text {
             width: 100%;
-            padding: 6px;
+            padding: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 12px;
-            min-height: 40px;
+            font-size: 11px;
+            min-height: 35px;
             resize: vertical;
             font-family: inherit;
             line-height: 1.4;
         }
 
-        .caption-item.active .caption-text {
-            border-color: #667eea;
-            background: white;
-        }
-
-        /* Word-by-word highlighting */
-        .caption-text-display {
-            padding: 6px;
-            font-size: 12px;
-            line-height: 1.6;
-            min-height: 40px;
-            word-wrap: break-word;
-        }
-
         .caption-word {
             display: inline;
             transition: all 0.15s;
-            padding: 2px 1px;
-            border-radius: 3px;
+            padding: 1px;
+            border-radius: 2px;
         }
 
         .caption-word.active-word {
             background: #ffd54f;
             color: #000;
             font-weight: 600;
-            padding: 2px 4px;
+            padding: 2px 3px;
         }
 
         .caption-actions {
             display: flex;
-            gap: 4px;
-            margin-top: 6px;
+            gap: 3px;
+            margin-top: 5px;
+        }
+
+        .btn-edit, .btn-delete {
+            padding: 3px 8px;
+            font-size: 9px;
+            border-radius: 3px;
         }
 
         .btn-delete {
@@ -490,57 +532,91 @@
             color: white;
         }
 
-        /* Status Bar - Compact */
+        /* Status Bar */
         .status-bar {
             background: #333;
             color: white;
-            padding: 8px;
+            padding: 5px;
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             flex-shrink: 0;
-        }
-
-        /* Action Buttons in Header */
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            padding: 10px 15px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e0e0e0;
-            flex-shrink: 0;
-        }
-
-        .action-buttons.collapsed {
-            display: none;
         }
 
         /* Responsive */
         @media (max-width: 1024px) {
-            .video-editor-layout {
+            .main-content {
                 flex-direction: column;
             }
 
             .video-section {
-                flex: 0 0 40%;
-            }
-
-            .editor-section {
-                flex: 1;
+                flex: 0 0 50%;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Compact Header -->
+        <!-- Header -->
         <div class="header">
             <h1>🎬 Adobe Premiere AI Captioning</h1>
-            <p>Generate and edit captions with real-time video sync</p>
+            <p>Real-time word-by-word caption highlighting</p>
         </div>
 
-        <div class="main-content">
-            <!-- Settings Panel -->
-            <div class="settings-panel" id="settingsPanel">
+        <!-- Action Bar (hidden initially) -->
+        <div class="action-bar hidden" id="actionBar">
+            <button class="btn-success btn-small" id="saveBtn">💾 Save Changes</button>
+            <button class="btn-success btn-small" id="downloadBtn">⬇️ Download SRT</button>
+            <div style="flex: 1;"></div>
+            <span style="font-size: 10px; color: #666;" id="captionCount">0 captions</span>
+        </div>
+
+        <!-- Main Content - Video + Captions (100vh fit) -->
+        <div class="main-content" id="mainContent">
+            <!-- Video Section -->
+            <div class="video-section">
+                <div class="video-container" id="videoContainer">
+                    <video id="videoPlayer"></video>
+
+                    <!-- Play/Pause Overlay Button -->
+                    <button class="play-pause-overlay" id="playPauseOverlay">▶️</button>
+
+                    <!-- Bottom Controls Overlay -->
+                    <div class="video-overlay" id="videoOverlay">
+                        <div class="video-controls">
+                            <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                            <div class="video-progress" id="videoProgress">
+                                <div class="video-progress-fill" id="videoProgressFill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caption Editor -->
+            <div class="editor-section">
+                <div class="editor-header">
+                    <div class="editor-title">✏️ Captions (Click to jump)</div>
+                    <div class="caption-count" id="captionCountSmall"></div>
+                </div>
+                <div class="captions-container" id="captionsContainer">
+                    <!-- Captions will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBar">
+            Ready - Drop a video file to begin
+        </div>
+    </div>
+
+    <!-- Upload Overlay (full screen) -->
+    <div class="upload-overlay" id="uploadOverlay">
+        <div class="upload-content">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #333;">Upload Video</h2>
+
+            <!-- Settings -->
+            <div class="settings-panel">
                 <div class="settings-row">
                     <div class="setting-group">
                         <label for="language">Language</label>
@@ -567,12 +643,12 @@
             <!-- Drop Zone -->
             <div class="drop-zone" id="dropZone">
                 <div class="drop-icon">🎥</div>
-                <div class="drop-text">Drag & Drop Video or Click</div>
-                <div class="file-info">MP4, MOV, AVI, MKV</div>
+                <div class="drop-text">Drag & Drop Video or Click to Browse</div>
+                <div class="file-info">MP4, MOV, AVI, MKV - Max 500MB</div>
             </div>
             <input type="file" id="fileInput" accept="video/*">
 
-            <!-- Progress Section -->
+            <!-- Progress -->
             <div class="progress-section" id="progressSection">
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill">0%</div>
@@ -581,52 +657,10 @@
             </div>
 
             <!-- Buttons -->
-            <div class="buttons" id="buttonsPanel">
+            <div class="upload-buttons">
                 <button class="btn-secondary" id="browseBtn">📁 Browse</button>
                 <button class="btn-primary" id="generateBtn" disabled>▶️ Generate Captions</button>
             </div>
-
-            <!-- Action Buttons (shown after generation) -->
-            <div class="action-buttons collapsed" id="actionButtons">
-                <button class="btn-success btn-small" id="saveBtn">💾 Save</button>
-                <button class="btn-success btn-small" id="downloadBtn">⬇️ Download SRT</button>
-            </div>
-
-            <!-- Video Player & Editor - 100vh -->
-            <div class="video-editor-container" id="videoEditorContainer">
-                <div class="video-editor-layout">
-                    <!-- Video Section -->
-                    <div class="video-section">
-                        <div class="video-player">
-                            <video id="videoPlayer"></video>
-                            <div class="video-controls">
-                                <button class="play-pause-btn" id="playPauseBtn">▶️ Play</button>
-                                <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
-                                <div class="video-progress" id="videoProgress">
-                                    <div class="video-progress-fill" id="videoProgressFill"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Editor Section -->
-                    <div class="editor-section">
-                        <div class="editor-header">
-                            <div>
-                                <div class="editor-title">✏️ Captions (Click to jump)</div>
-                                <div class="caption-count" id="captionCount">0 captions</div>
-                            </div>
-                        </div>
-                        <div class="captions-container" id="captionsContainer">
-                            <!-- Captions will be loaded here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="status-bar" id="statusBar">
-            Ready - Drop a video file or click Browse
         </div>
     </div>
 
@@ -639,32 +673,35 @@
         let editingCaptionIndex = -1;
 
         // DOM Elements
-        const settingsPanel = document.getElementById('settingsPanel');
+        const uploadOverlay = document.getElementById('uploadOverlay');
+        const mainContent = document.getElementById('mainContent');
+        const actionBar = document.getElementById('actionBar');
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const browseBtn = document.getElementById('browseBtn');
         const generateBtn = document.getElementById('generateBtn');
         const saveBtn = document.getElementById('saveBtn');
         const downloadBtn = document.getElementById('downloadBtn');
-        const buttonsPanel = document.getElementById('buttonsPanel');
-        const actionButtons = document.getElementById('actionButtons');
         const progressSection = document.getElementById('progressSection');
         const progressFill = document.getElementById('progressFill');
         const progressMessage = document.getElementById('progressMessage');
-        const videoEditorContainer = document.getElementById('videoEditorContainer');
         const captionsContainer = document.getElementById('captionsContainer');
         const captionCount = document.getElementById('captionCount');
+        const captionCountSmall = document.getElementById('captionCountSmall');
         const statusBar = document.getElementById('statusBar');
 
         // Video Player Elements
+        const videoContainer = document.getElementById('videoContainer');
         const videoPlayer = document.getElementById('videoPlayer');
-        const playPauseBtn = document.getElementById('playPauseBtn');
+        const playPauseOverlay = document.getElementById('playPauseOverlay');
+        const videoOverlay = document.getElementById('videoOverlay');
         const timeDisplay = document.getElementById('timeDisplay');
         const videoProgress = document.getElementById('videoProgress');
         const videoProgressFill = document.getElementById('videoProgressFill');
 
-        // Drag and drop handlers
+        // Drag and drop
         dropZone.addEventListener('click', () => fileInput.click());
+        browseBtn.addEventListener('click', () => fileInput.click());
 
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -690,8 +727,6 @@
             }
         });
 
-        browseBtn.addEventListener('click', () => fileInput.click());
-
         function handleFile(file) {
             currentFile = file;
             dropZone.classList.add('loaded');
@@ -702,8 +737,6 @@
             `;
             generateBtn.disabled = false;
             statusBar.textContent = `Loaded: ${file.name}`;
-
-            // Create object URL for video preview
             currentVideoUrl = URL.createObjectURL(file);
         }
 
@@ -725,7 +758,6 @@
             generateBtn.disabled = true;
             browseBtn.disabled = true;
             progressSection.style.display = 'block';
-            videoEditorContainer.style.display = 'none';
 
             try {
                 const response = await fetch('/upload', {
@@ -735,9 +767,7 @@
 
                 const data = await response.json();
                 currentJobId = data.job_id;
-                statusBar.textContent = 'Processing started...';
-
-                // Poll for status
+                statusBar.textContent = 'Processing...';
                 pollStatus();
             } catch (error) {
                 statusBar.textContent = 'Error: ' + error.message;
@@ -752,49 +782,26 @@
                     const response = await fetch(`/status/${currentJobId}`);
                     const data = await response.json();
 
-                    updateProgress(data.progress, data.message);
+                    progressFill.style.width = data.progress + '%';
+                    progressFill.textContent = Math.round(data.progress) + '%';
+                    progressMessage.textContent = data.message;
+                    statusBar.textContent = data.message;
 
                     if (data.status === 'complete') {
                         clearInterval(interval);
-                        onProcessingComplete();
+                        await loadCaptions();
+                        showEditor();
                     } else if (data.status === 'error') {
                         clearInterval(interval);
-                        onProcessingError(data.message);
+                        statusBar.textContent = '❌ Error: ' + data.message;
+                        generateBtn.disabled = false;
+                        browseBtn.disabled = false;
                     }
                 } catch (error) {
                     clearInterval(interval);
-                    onProcessingError(error.message);
+                    statusBar.textContent = '❌ Error: ' + error.message;
                 }
             }, 1000);
-        }
-
-        function updateProgress(progress, message) {
-            progressFill.style.width = progress + '%';
-            progressFill.textContent = Math.round(progress) + '%';
-            progressMessage.textContent = message;
-            statusBar.textContent = message;
-        }
-
-        async function onProcessingComplete() {
-            statusBar.textContent = '✅ Captions generated! Loading player...';
-
-            // Load captions and show video player
-            await loadCaptions();
-            showVideoPlayer();
-
-            // Collapse upload UI
-            settingsPanel.classList.add('collapsed');
-            dropZone.classList.add('collapsed');
-            buttonsPanel.classList.add('collapsed');
-            progressSection.style.display = 'none';
-            actionButtons.classList.remove('collapsed');
-        }
-
-        function onProcessingError(message) {
-            statusBar.textContent = '❌ Error: ' + message;
-            generateBtn.disabled = false;
-            browseBtn.disabled = false;
-            progressSection.style.display = 'none';
         }
 
         async function loadCaptions() {
@@ -802,22 +809,25 @@
                 const response = await fetch(`/captions/${currentJobId}`);
                 const data = await response.json();
                 captions = data.captions;
-
                 renderCaptions();
                 captionCount.textContent = `${captions.length} captions - ${data.detected_language}`;
+                captionCountSmall.textContent = `${captions.length} captions`;
             } catch (error) {
-                statusBar.textContent = 'Error loading captions: ' + error.message;
+                statusBar.textContent = 'Error loading captions';
             }
         }
 
-        function showVideoPlayer() {
-            if (!currentVideoUrl) return;
+        function showEditor() {
+            uploadOverlay.classList.add('hidden');
+            actionBar.classList.remove('hidden');
 
-            videoEditorContainer.style.display = 'block';
-            videoPlayer.src = currentVideoUrl;
-            videoPlayer.load();
+            if (currentVideoUrl) {
+                videoPlayer.src = currentVideoUrl;
+                videoPlayer.load();
+                videoContainer.classList.add('paused');
+            }
 
-            statusBar.textContent = '🎥 Ready! Press Play to see word-by-word highlighting';
+            statusBar.textContent = '🎥 Click video to play • Watch word-by-word highlighting';
         }
 
         function renderCaptions() {
@@ -830,12 +840,10 @@
                 item.dataset.start = timeToSeconds(caption.start);
                 item.dataset.end = timeToSeconds(caption.end);
 
-                // Split text into words for word-by-word highlighting
                 const words = caption.text.split(/\s+/);
                 const duration = timeToSeconds(caption.end) - timeToSeconds(caption.start);
                 const timePerWord = duration / words.length;
 
-                // Create word spans with estimated timings
                 let wordHTML = '';
                 words.forEach((word, wordIndex) => {
                     const wordStart = timeToSeconds(caption.start) + (wordIndex * timePerWord);
@@ -862,7 +870,6 @@
                 `;
                 captionsContainer.appendChild(item);
 
-                // Click caption to seek video
                 item.addEventListener('click', (e) => {
                     if (!e.target.classList.contains('timestamp-input') &&
                         !e.target.classList.contains('btn-delete') &&
@@ -872,7 +879,6 @@
                 });
             });
 
-            // Add event listeners
             document.querySelectorAll('.timestamp-input').forEach(input => {
                 input.addEventListener('change', handleTimestampChange);
             });
@@ -885,14 +891,11 @@
             const secParts = parts[2].split(',');
             const seconds = parseInt(secParts[0]);
             const milliseconds = parseInt(secParts[1] || 0);
-
             return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
         }
 
         function seekToCaption(index) {
-            const caption = captions[index];
-            const startTime = timeToSeconds(caption.start);
-            videoPlayer.currentTime = startTime;
+            videoPlayer.currentTime = timeToSeconds(captions[index].start);
             if (videoPlayer.paused) {
                 videoPlayer.play();
             }
@@ -901,71 +904,55 @@
         function editCaption(index) {
             const item = document.querySelector(`.caption-item[data-index="${index}"]`);
             const displayDiv = item.querySelector('.caption-text-display');
-            const currentText = captions[index].text;
+            displayDiv.outerHTML = `<textarea class="caption-text" data-index="${index}">${captions[index].text}</textarea>`;
 
-            // Replace display with textarea
-            displayDiv.outerHTML = `<textarea class="caption-text" data-index="${index}">${currentText}</textarea>`;
-
-            // Update button
             const editBtn = item.querySelector('.btn-edit');
-            editBtn.textContent = '💾 Save';
+            editBtn.textContent = '💾';
             editBtn.onclick = () => saveCaption(index);
-
-            editingCaptionIndex = index;
         }
 
         function saveCaption(index) {
             const item = document.querySelector(`.caption-item[data-index="${index}"]`);
             const textarea = item.querySelector('.caption-text');
             captions[index].text = textarea.value;
-
-            // Re-render this caption
             renderCaptions();
-            statusBar.textContent = 'Caption edited - Click Save to persist';
-            editingCaptionIndex = -1;
+            statusBar.textContent = 'Edited - Click Save';
         }
 
-        // Video Player Controls
-        playPauseBtn.addEventListener('click', () => {
+        // Video Controls
+        videoPlayer.addEventListener('click', togglePlay);
+        playPauseOverlay.addEventListener('click', (e) => {
+            e.stopPropagation();
+            togglePlay();
+        });
+
+        function togglePlay() {
             if (videoPlayer.paused) {
                 videoPlayer.play();
-                playPauseBtn.textContent = '⏸️ Pause';
+                playPauseOverlay.textContent = '⏸️';
+                videoContainer.classList.remove('paused');
             } else {
                 videoPlayer.pause();
-                playPauseBtn.textContent = '▶️ Play';
+                playPauseOverlay.textContent = '▶️';
+                videoContainer.classList.add('paused');
             }
-        });
+        }
 
         videoPlayer.addEventListener('timeupdate', () => {
             const currentTime = videoPlayer.currentTime;
             const duration = videoPlayer.duration || 0;
 
-            // Update progress bar
-            const progress = (currentTime / duration) * 100;
-            videoProgressFill.style.width = progress + '%';
-
-            // Update time display
+            videoProgressFill.style.width = ((currentTime / duration) * 100) + '%';
             timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
 
-            // Highlight active caption and word
             highlightActiveCaption(currentTime);
             highlightActiveWord(currentTime);
         });
 
-        videoPlayer.addEventListener('play', () => {
-            playPauseBtn.textContent = '⏸️ Pause';
-        });
-
-        videoPlayer.addEventListener('pause', () => {
-            playPauseBtn.textContent = '▶️ Play';
-        });
-
-        // Click progress bar to seek
         videoProgress.addEventListener('click', (e) => {
             const rect = videoProgress.getBoundingClientRect();
             const x = e.clientX - rect.left;
-            const percentage = x / rect.width;
-            videoPlayer.currentTime = percentage * videoPlayer.duration;
+            videoPlayer.currentTime = (x / rect.width) * videoPlayer.duration;
         });
 
         function formatTime(seconds) {
@@ -979,27 +966,19 @@
             let activeIndex = -1;
 
             captions.forEach((caption, index) => {
-                const start = timeToSeconds(caption.start);
-                const end = timeToSeconds(caption.end);
-
-                if (currentTime >= start && currentTime < end) {
+                if (currentTime >= timeToSeconds(caption.start) && currentTime < timeToSeconds(caption.end)) {
                     activeIndex = index;
                 }
             });
 
             if (activeIndex !== currentActiveCaptionIndex) {
-                document.querySelectorAll('.caption-item').forEach(item => {
-                    item.classList.remove('active');
-                });
+                document.querySelectorAll('.caption-item').forEach(item => item.classList.remove('active'));
 
                 if (activeIndex >= 0) {
                     const activeItem = document.querySelector(`.caption-item[data-index="${activeIndex}"]`);
                     if (activeItem) {
                         activeItem.classList.add('active');
-                        activeItem.scrollIntoView({
-                            behavior: 'smooth',
-                            block: 'center'
-                        });
+                        activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }
 
@@ -1008,12 +987,8 @@
         }
 
         function highlightActiveWord(currentTime) {
-            // Remove all word highlights
-            document.querySelectorAll('.caption-word').forEach(word => {
-                word.classList.remove('active-word');
-            });
+            document.querySelectorAll('.caption-word').forEach(word => word.classList.remove('active-word'));
 
-            // Find and highlight current word
             document.querySelectorAll('.caption-word').forEach(word => {
                 const wordStart = parseFloat(word.dataset.wordStart);
                 const wordEnd = parseFloat(word.dataset.wordEnd);
@@ -1028,15 +1003,6 @@
             const index = parseInt(e.target.dataset.index);
             const field = e.target.dataset.field;
             captions[index][field] = e.target.value;
-
-            const item = document.querySelector(`.caption-item[data-index="${index}"]`);
-            if (field === 'start') {
-                item.dataset.start = timeToSeconds(e.target.value);
-            } else {
-                item.dataset.end = timeToSeconds(e.target.value);
-            }
-
-            // Re-render to update word timings
             renderCaptions();
             statusBar.textContent = 'Modified - Click Save';
         }
@@ -1046,7 +1012,8 @@
                 captions.splice(index, 1);
                 renderCaptions();
                 captionCount.textContent = `${captions.length} captions`;
-                statusBar.textContent = 'Caption deleted - Click Save';
+                captionCountSmall.textContent = `${captions.length} captions`;
+                statusBar.textContent = 'Deleted - Click Save';
             }
         }
 
@@ -1054,29 +1021,25 @@
             try {
                 const response = await fetch(`/save/${currentJobId}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ captions })
                 });
-
                 const data = await response.json();
                 statusBar.textContent = '✅ ' + data.message;
             } catch (error) {
-                statusBar.textContent = '❌ Save failed: ' + error.message;
+                statusBar.textContent = '❌ Save failed';
             }
         });
 
         downloadBtn.addEventListener('click', () => {
             window.location.href = `/download/${currentJobId}`;
-            statusBar.textContent = 'Downloading...';
         });
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
                 e.preventDefault();
-                playPauseBtn.click();
+                togglePlay();
             }
         });
     </script>

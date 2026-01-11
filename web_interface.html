@@ -717,6 +717,7 @@
                         <div class="editor-controls">
                             <span class="style-label">Max Words:</span>
                             <input type="number" class="editor-lang-select" id="maxWordsInput" value="15" min="5" max="50" style="width: 60px;">
+                            <button class="text-highlight-btn" id="autoSplitBtn" style="margin-left: 5px;">✂️ Auto-Split</button>
                         </div>
                     </div>
                     <div class="style-controls">
@@ -1001,12 +1002,13 @@
         // Event listeners
         applyStyleBtn.addEventListener('click', applyWordStyling);
 
-        // Auto-split when max words changes
-        maxWordsInput.addEventListener('change', () => {
+        // Auto-split button click
+        const autoSplitBtn = document.getElementById('autoSplitBtn');
+        autoSplitBtn.addEventListener('click', () => {
             if (captions.length > 0) {
-                if (confirm('Auto-split captions exceeding max words?')) {
-                    autoSplitLongCaptions();
-                }
+                autoSplitLongCaptions();
+            } else {
+                statusBar.textContent = 'No captions loaded yet';
             }
         });
 
@@ -1159,9 +1161,10 @@
                     displayHTML = caption.styledText;
                 } else {
                     // Regular caption - build word-by-word highlighting
-                    const words = caption.text.split(/\s+/);
+                    const plainText = caption.text.replace(/<[^>]*>/g, ''); // Strip HTML tags
+                    const words = plainText.split(/\s+/).filter(w => w.length > 0); // Filter empty strings
                     const duration = timeToSeconds(caption.end) - timeToSeconds(caption.start);
-                    const timePerWord = duration / words.length;
+                    const timePerWord = words.length > 0 ? duration / words.length : 0;
 
                     words.forEach((word, wordIndex) => {
                         const wordStart = timeToSeconds(caption.start) + (wordIndex * timePerWord);

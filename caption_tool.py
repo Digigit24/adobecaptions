@@ -265,6 +265,7 @@ class CaptionTool:
             max_words: Maximum words per caption (default: 15)
         """
         print(f"\n[4/4] Generating SRT file...")
+        print(f"    Max words per caption: {max_words}")
 
         # Merge into sentence-level captions
         merged_segments = self.merge_segments_into_sentences(segments, max_words=max_words)

@@ -364,6 +364,36 @@
             transition: width 0.1s linear;
         }
 
+        /* Video Caption Overlay */
+        .video-caption-overlay {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 85%;
+            text-align: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .video-caption-text {
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 1.5;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            display: inline-block;
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+
+        .caption-word-overlay {
+            display: inline;
+        }
+
         /* Caption Editor - Right */
         .editor-section {
             flex: 1;
@@ -380,6 +410,80 @@
             padding: 8px 12px;
             border-bottom: 1px solid #e0e0e0;
             flex-shrink: 0;
+        }
+
+        .editor-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .editor-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .editor-lang-select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .style-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            padding: 6px 0;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .style-label {
+            font-size: 10px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .color-picker {
+            width: 30px;
+            height: 22px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .font-select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 11px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .text-highlight-btn {
+            padding: 4px 8px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .text-highlight-btn:hover {
+            background: #5568d3;
         }
 
         .editor-title {
@@ -643,6 +747,11 @@
                     <!-- Play/Pause Overlay Button -->
                     <button class="play-pause-overlay" id="playPauseOverlay">▶️</button>
 
+                    <!-- Caption Overlay on Video -->
+                    <div class="video-caption-overlay" id="videoCaptionOverlay">
+                        <div class="video-caption-text" id="videoCaptionText"></div>
+                    </div>
+
                     <!-- Bottom Controls Overlay -->
                     <div class="video-overlay" id="videoOverlay">
                         <div class="video-controls">
@@ -658,8 +767,42 @@
             <!-- Caption Editor -->
             <div class="editor-section">
                 <div class="editor-header">
-                    <div class="editor-title">✏️ Captions (Click to jump)</div>
-                    <div class="caption-count" id="captionCountSmall"></div>
+                    <div class="editor-header-top">
+                        <div>
+                            <div class="editor-title">✏️ Captions (Click to jump)</div>
+                            <div class="caption-count" id="captionCountSmall"></div>
+                        </div>
+                        <div class="editor-controls">
+                            <span class="style-label">Input:</span>
+                            <select class="editor-lang-select" id="editorLangSelect">
+                                <option value="none">English Only</option>
+                                <option value="hi">हिंदी Hindi</option>
+                                <option value="mr">मराठी Marathi</option>
+                                <option value="hi-en">Hinglish</option>
+                                <option value="mr-en">Marathi+English</option>
+                                <option value="mixed">Mixed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="style-controls">
+                        <span class="style-label">Style:</span>
+                        <div class="color-picker-wrapper">
+                            <label class="style-label">Color</label>
+                            <input type="color" class="color-picker" id="textColorPicker" value="#ffffff">
+                        </div>
+                        <div class="color-picker-wrapper">
+                            <label class="style-label">Font</label>
+                            <select class="font-select" id="fontSelect">
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="'Noto Sans Devanagari', sans-serif" selected>Noto Sans Devanagari</option>
+                                <option value="'Tiro Devanagari Hindi', serif">Tiro Devanagari</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Courier</option>
+                                <option value="Impact, sans-serif">Impact</option>
+                            </select>
+                        </div>
+                        <button class="text-highlight-btn" id="applyStyleBtn">Apply to Selected</button>
+                    </div>
                 </div>
                 <div class="captions-container" id="captionsContainer">
                     <!-- Captions will be loaded here -->
@@ -777,6 +920,18 @@
         const transliterationDropdown = document.getElementById('transliterationDropdown');
         const transliterationHint = document.getElementById('transliterationHint');
         const languageSelect = document.getElementById('language');
+
+        // Editor Elements
+        const editorLangSelect = document.getElementById('editorLangSelect');
+        const textColorPicker = document.getElementById('textColorPicker');
+        const fontSelect = document.getElementById('fontSelect');
+        const applyStyleBtn = document.getElementById('applyStyleBtn');
+        const videoCaptionOverlay = document.getElementById('videoCaptionOverlay');
+        const videoCaptionText = document.getElementById('videoCaptionText');
+
+        // Current editing state
+        let currentEditingTextarea = null;
+        let selectedTextRange = null;
 
         // Transliteration Library - Hindi/Marathi Mapping
         const transliterationMap = {
@@ -1062,11 +1217,14 @@
         function attachTransliteration(textarea) {
             let suggestions = [];
 
-            textarea.addEventListener('input', (e) => {
-                const selectedLang = languageSelect.value;
+            // Track current textarea being edited
+            currentEditingTextarea = textarea;
 
-                // Only show transliteration for Hindi, Marathi, and mixed languages
-                if (!['hi', 'mr', 'hi-en', 'mr-en', 'mixed'].includes(selectedLang)) {
+            textarea.addEventListener('input', (e) => {
+                const selectedLang = editorLangSelect.value;
+
+                // Only show transliteration for Hindi, Marathi, and mixed languages (not 'none')
+                if (selectedLang === 'none' || !['hi', 'mr', 'hi-en', 'mr-en', 'mixed'].includes(selectedLang)) {
                     transliterationDropdown.classList.remove('show');
                     transliterationHint.classList.remove('show');
                     return;
@@ -1399,6 +1557,7 @@
 
             highlightActiveCaption(currentTime);
             highlightActiveWord(currentTime);
+            updateVideoCaptionOverlay(currentTime);
         });
 
         videoProgress.addEventListener('click', (e) => {
@@ -1450,6 +1609,74 @@
                 }
             });
         }
+
+        // Update video caption overlay
+        function updateVideoCaptionOverlay(currentTime) {
+            let activeCaption = null;
+
+            captions.forEach((caption) => {
+                if (currentTime >= timeToSeconds(caption.start) && currentTime < timeToSeconds(caption.end)) {
+                    activeCaption = caption;
+                }
+            });
+
+            if (activeCaption) {
+                videoCaptionText.textContent = activeCaption.text;
+
+                // Apply custom styles if they exist
+                if (activeCaption.color) {
+                    videoCaptionText.style.color = activeCaption.color;
+                } else {
+                    videoCaptionText.style.color = '#ffffff';
+                }
+
+                if (activeCaption.fontFamily) {
+                    videoCaptionText.style.fontFamily = activeCaption.fontFamily;
+                } else {
+                    videoCaptionText.style.fontFamily = "'Noto Sans Devanagari', sans-serif";
+                }
+
+                videoCaptionOverlay.style.display = 'block';
+            } else {
+                videoCaptionOverlay.style.display = 'none';
+            }
+        }
+
+        // Apply style to selected text
+        applyStyleBtn.addEventListener('click', () => {
+            if (!currentEditingTextarea) {
+                alert('Please click Edit on a caption first');
+                return;
+            }
+
+            const start = currentEditingTextarea.selectionStart;
+            const end = currentEditingTextarea.selectionEnd;
+
+            if (start === end) {
+                alert('Please select some text to apply style');
+                return;
+            }
+
+            // For now, apply to entire caption
+            // You can enhance this to support partial text styling with HTML
+            const index = parseInt(currentEditingTextarea.dataset.index);
+            if (index >= 0 && index < captions.length) {
+                captions[index].color = textColorPicker.value;
+                captions[index].fontFamily = fontSelect.value;
+                statusBar.textContent = 'Style applied - Click Save';
+                alert(`Style applied to caption #${captions[index].index}\nColor: ${textColorPicker.value}\nFont: ${fontSelect.options[fontSelect.selectedIndex].text}`);
+            }
+        });
+
+        // Track textarea selection
+        document.addEventListener('selectionchange', () => {
+            if (currentEditingTextarea && document.activeElement === currentEditingTextarea) {
+                selectedTextRange = {
+                    start: currentEditingTextarea.selectionStart,
+                    end: currentEditingTextarea.selectionEnd
+                };
+            }
+        });
 
         function handleTimestampChange(e) {
             const index = parseInt(e.target.dataset.index);

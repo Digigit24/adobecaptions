@@ -61,6 +61,17 @@ ffmpeg -version
 
 ### 3. Test the Tool
 
+**Option A: GUI Mode (Recommended)**
+
+1. Double-click `start_gui.bat`
+2. Drag a test video file (MP4 or MOV) into the window
+3. Click "Generate Captions"
+4. Wait for processing
+5. Edit captions in the built-in editor
+6. Save and check the `.srt` file
+
+**Option B: Command Line Mode**
+
 1. Get a test video file (MP4 or MOV)
 2. Drag and drop it onto `caption_video.bat`
 3. Wait for processing

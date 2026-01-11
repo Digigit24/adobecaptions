@@ -4,5 +4,8 @@
 # Faster Whisper - optimized Whisper implementation
 faster-whisper>=1.0.0
 
+# GUI dependencies
+tkinterdnd2>=0.3.0
+
 # Alternative: Use openai-whisper if faster-whisper has issues
 # openai-whisper>=20230314

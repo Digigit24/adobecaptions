@@ -17,6 +17,38 @@ Internal-use tool for generating SRT captions from video files with support for 
 - ✅ **Clean timestamps** (no overflow issues)
 - ✅ **One-click execution** via batch files
 - ✅ **Progress logging** and error handling
+- ✅ **GUI Application** with drag-and-drop and caption editor
+- ✅ **Visual caption editor** for fixing spellings and timing
+
+---
+
+## 🆕 GUI Mode (Recommended for Beginners)
+
+**NEW! Easy-to-use graphical interface with drag-and-drop and built-in caption editor.**
+
+### Launch GUI
+
+Double-click `start_gui.bat` or run:
+```bash
+python caption_gui.py
+```
+
+### Features
+- 🎯 **Drag & drop** video files
+- 📊 **Visual progress** tracking
+- ✏️ **Built-in caption editor** with spelling correction
+- 🎨 **Edit timestamps** and caption text
+- 💾 **Save directly** to SRT
+- 📋 **Export info** for Premiere Pro
+
+### Quick Workflow
+1. Double-click `start_gui.bat`
+2. Drag video file into window
+3. Click "Generate Captions"
+4. Edit captions in built-in editor
+5. Save and import to Premiere Pro
+
+**See [GUI_GUIDE.md](GUI_GUIDE.md) for detailed GUI documentation.**
 
 ---
 
@@ -166,13 +198,19 @@ If fonts are missing, download from [Google Fonts](https://fonts.google.com/?sub
 ```
 adobecaptions/
 │
-├── caption_tool.py              # Main Python script
-├── caption_video.bat            # Simple drag-and-drop launcher
-├── caption_video_advanced.bat   # Advanced launcher with options
+├── caption_tool.py              # Main Python script (command-line)
+├── caption_gui.py               # GUI application (NEW!)
+├── start_gui.bat                # Launch GUI (double-click this!)
+├── caption_video.bat            # Simple drag-and-drop launcher (CLI)
+├── caption_video_advanced.bat   # Advanced launcher with options (CLI)
 ├── requirements.txt             # Python dependencies
 ├── README.md                    # This file
+├── GUI_GUIDE.md                 # GUI user guide (NEW!)
+├── SETUP.md                     # Quick setup guide
+├── TROUBLESHOOTING.md           # Troubleshooting guide
+├── LICENSE.txt                  # License information
 │
-├── examples/                    # (Optional) Example files
+├── examples/                    # Example files
 │   └── sample_output.srt
 │
 └── .gitignore                   # Git ignore file

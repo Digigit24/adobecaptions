@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -195,7 +195,7 @@
             transition: all 0.3s;
         }
 
-        button:hover {
+        button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
@@ -221,8 +221,78 @@
             color: white;
         }
 
-        .editor-section {
+        /* Video Player & Editor Layout */
+        .video-editor-container {
             display: none;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .video-section {
+            flex: 1;
+            max-width: 600px;
+        }
+
+        .video-player {
+            width: 100%;
+            border-radius: 10px;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .video-player video {
+            width: 100%;
+            display: block;
+        }
+
+        .video-controls {
+            background: #333;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .play-pause-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .play-pause-btn:hover {
+            background: #5568d3;
+        }
+
+        .time-display {
+            color: white;
+            font-size: 14px;
+            font-family: monospace;
+        }
+
+        .video-progress {
+            flex: 1;
+            height: 6px;
+            background: #555;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .video-progress-fill {
+            height: 100%;
+            background: #667eea;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .editor-section {
+            flex: 1;
         }
 
         .editor-header {
@@ -258,11 +328,30 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #ccc;
+            transition: all 0.3s;
+            cursor: pointer;
         }
 
         .caption-item:nth-child(even) {
             background: #fff;
+        }
+
+        .caption-item:hover {
+            border-left-color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .caption-item.active {
+            border-left-color: #667eea;
+            background: #e8f0ff !important;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
 
         .caption-header {
@@ -276,6 +365,11 @@
             font-weight: 600;
             color: #667eea;
             min-width: 40px;
+        }
+
+        .caption-item.active .caption-index {
+            color: #4556c7;
+            font-size: 18px;
         }
 
         .timestamp-input {
@@ -300,6 +394,11 @@
             min-height: 60px;
             resize: vertical;
             font-family: inherit;
+        }
+
+        .caption-item.active .caption-text {
+            border-color: #667eea;
+            background: white;
         }
 
         .caption-actions {
@@ -335,6 +434,17 @@
             display: none;
         }
 
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .video-editor-container {
+                flex-direction: column;
+            }
+
+            .video-section {
+                max-width: 100%;
+            }
+        }
+
         @media (max-width: 768px) {
             .settings-row {
                 flex-direction: column;
@@ -350,7 +460,7 @@
     <div class="container">
         <div class="header">
             <h1>🎬 Adobe Premiere AI Captioning Tool</h1>
-            <p>Generate and edit AI-powered captions for your videos</p>
+            <p>Generate and edit AI-powered captions with synchronized video preview</p>
         </div>
 
         <div class="main-content">
@@ -403,19 +513,36 @@
                 <button class="btn-success hidden" id="downloadBtn">💾 Download SRT</button>
             </div>
 
-            <!-- Editor Section -->
-            <div class="editor-section" id="editorSection">
-                <div class="editor-header">
-                    <div>
-                        <div class="editor-title">✏️ Caption Editor</div>
-                        <div class="caption-count" id="captionCount">0 captions</div>
-                    </div>
-                    <div>
-                        <button class="btn-small btn-success" id="saveBtn">💾 Save Changes</button>
+            <!-- Video Player & Editor -->
+            <div class="video-editor-container" id="videoEditorContainer">
+                <!-- Video Section -->
+                <div class="video-section">
+                    <div class="video-player">
+                        <video id="videoPlayer"></video>
+                        <div class="video-controls">
+                            <button class="play-pause-btn" id="playPauseBtn">▶️ Play</button>
+                            <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                            <div class="video-progress" id="videoProgress">
+                                <div class="video-progress-fill" id="videoProgressFill"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="captions-container" id="captionsContainer">
-                    <!-- Captions will be loaded here -->
+
+                <!-- Editor Section -->
+                <div class="editor-section" id="editorSection">
+                    <div class="editor-header">
+                        <div>
+                            <div class="editor-title">✏️ Caption Editor (Click caption to jump to time)</div>
+                            <div class="caption-count" id="captionCount">0 captions</div>
+                        </div>
+                        <div>
+                            <button class="btn-small btn-success" id="saveBtn">💾 Save Changes</button>
+                        </div>
+                    </div>
+                    <div class="captions-container" id="captionsContainer">
+                        <!-- Captions will be loaded here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -428,8 +555,11 @@
     <script>
         let currentJobId = null;
         let currentFile = null;
+        let currentVideoUrl = null;
         let captions = [];
+        let currentActiveCaptionIndex = -1;
 
+        // DOM Elements
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const browseBtn = document.getElementById('browseBtn');
@@ -439,10 +569,17 @@
         const progressSection = document.getElementById('progressSection');
         const progressFill = document.getElementById('progressFill');
         const progressMessage = document.getElementById('progressMessage');
-        const editorSection = document.getElementById('editorSection');
+        const videoEditorContainer = document.getElementById('videoEditorContainer');
         const captionsContainer = document.getElementById('captionsContainer');
         const captionCount = document.getElementById('captionCount');
         const statusBar = document.getElementById('statusBar');
+
+        // Video Player Elements
+        const videoPlayer = document.getElementById('videoPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const videoProgress = document.getElementById('videoProgress');
+        const videoProgressFill = document.getElementById('videoProgressFill');
 
         // Drag and drop handlers
         dropZone.addEventListener('click', () => fileInput.click());
@@ -483,6 +620,9 @@
             `;
             generateBtn.disabled = false;
             statusBar.textContent = `Loaded: ${file.name}`;
+
+            // Create object URL for video preview
+            currentVideoUrl = URL.createObjectURL(file);
         }
 
         function formatFileSize(bytes) {
@@ -503,7 +643,7 @@
             generateBtn.disabled = true;
             browseBtn.disabled = true;
             progressSection.style.display = 'block';
-            editorSection.style.display = 'none';
+            videoEditorContainer.style.display = 'none';
             downloadBtn.classList.add('hidden');
 
             try {
@@ -560,8 +700,9 @@
             browseBtn.disabled = false;
             downloadBtn.classList.remove('hidden');
 
-            // Load captions
+            // Load captions and show video player
             await loadCaptions();
+            showVideoPlayer();
         }
 
         function onProcessingError(message) {
@@ -578,11 +719,20 @@
                 captions = data.captions;
 
                 renderCaptions();
-                editorSection.style.display = 'block';
                 captionCount.textContent = `${captions.length} captions - Language: ${data.detected_language}`;
             } catch (error) {
                 statusBar.textContent = 'Error loading captions: ' + error.message;
             }
+        }
+
+        function showVideoPlayer() {
+            if (!currentVideoUrl) return;
+
+            videoEditorContainer.style.display = 'flex';
+            videoPlayer.src = currentVideoUrl;
+            videoPlayer.load();
+
+            statusBar.textContent = '🎥 Video loaded - Click Play to preview with captions';
         }
 
         function renderCaptions() {
@@ -591,6 +741,10 @@
             captions.forEach((caption, index) => {
                 const item = document.createElement('div');
                 item.className = 'caption-item';
+                item.dataset.index = index;
+                item.dataset.start = timeToSeconds(caption.start);
+                item.dataset.end = timeToSeconds(caption.end);
+
                 item.innerHTML = `
                     <div class="caption-header">
                         <span class="caption-index">#${caption.index}</span>
@@ -606,6 +760,15 @@
                     </div>
                 `;
                 captionsContainer.appendChild(item);
+
+                // Click caption to seek video
+                item.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('timestamp-input') &&
+                        !e.target.classList.contains('caption-text') &&
+                        !e.target.classList.contains('btn-delete')) {
+                        seekToCaption(index);
+                    }
+                });
             });
 
             // Add event listeners
@@ -618,10 +781,140 @@
             });
         }
 
+        function timeToSeconds(timeStr) {
+            // Convert HH:MM:SS,mmm to seconds
+            const parts = timeStr.split(':');
+            const hours = parseInt(parts[0]);
+            const minutes = parseInt(parts[1]);
+            const secParts = parts[2].split(',');
+            const seconds = parseInt(secParts[0]);
+            const milliseconds = parseInt(secParts[1]);
+
+            return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+        }
+
+        function secondsToTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
+        }
+
+        function seekToCaption(index) {
+            const caption = captions[index];
+            const startTime = timeToSeconds(caption.start);
+            videoPlayer.currentTime = startTime;
+            if (videoPlayer.paused) {
+                videoPlayer.play();
+            }
+        }
+
+        // Video Player Controls
+        playPauseBtn.addEventListener('click', () => {
+            if (videoPlayer.paused) {
+                videoPlayer.play();
+                playPauseBtn.textContent = '⏸️ Pause';
+            } else {
+                videoPlayer.pause();
+                playPauseBtn.textContent = '▶️ Play';
+            }
+        });
+
+        videoPlayer.addEventListener('timeupdate', () => {
+            const currentTime = videoPlayer.currentTime;
+            const duration = videoPlayer.duration || 0;
+
+            // Update progress bar
+            const progress = (currentTime / duration) * 100;
+            videoProgressFill.style.width = progress + '%';
+
+            // Update time display
+            timeDisplay.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+
+            // Highlight active caption
+            highlightActiveCaption(currentTime);
+        });
+
+        videoPlayer.addEventListener('play', () => {
+            playPauseBtn.textContent = '⏸️ Pause';
+        });
+
+        videoPlayer.addEventListener('pause', () => {
+            playPauseBtn.textContent = '▶️ Play';
+        });
+
+        videoPlayer.addEventListener('ended', () => {
+            playPauseBtn.textContent = '▶️ Play';
+        });
+
+        // Click progress bar to seek
+        videoProgress.addEventListener('click', (e) => {
+            const rect = videoProgress.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = x / rect.width;
+            videoPlayer.currentTime = percentage * videoPlayer.duration;
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '00:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function highlightActiveCaption(currentTime) {
+            let activeIndex = -1;
+
+            // Find which caption is currently active
+            captions.forEach((caption, index) => {
+                const start = timeToSeconds(caption.start);
+                const end = timeToSeconds(caption.end);
+
+                if (currentTime >= start && currentTime < end) {
+                    activeIndex = index;
+                }
+            });
+
+            // Only update if changed
+            if (activeIndex !== currentActiveCaptionIndex) {
+                // Remove previous active
+                document.querySelectorAll('.caption-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Add new active
+                if (activeIndex >= 0) {
+                    const activeItem = document.querySelector(`.caption-item[data-index="${activeIndex}"]`);
+                    if (activeItem) {
+                        activeItem.classList.add('active');
+
+                        // Auto-scroll to active caption
+                        activeItem.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }
+
+                currentActiveCaptionIndex = activeIndex;
+            }
+        }
+
         function handleTimestampChange(e) {
             const index = parseInt(e.target.dataset.index);
             const field = e.target.dataset.field;
             captions[index][field] = e.target.value;
+
+            // Update data attributes for sync
+            const item = document.querySelector(`.caption-item[data-index="${index}"]`);
+            if (field === 'start') {
+                item.dataset.start = timeToSeconds(e.target.value);
+            } else {
+                item.dataset.end = timeToSeconds(e.target.value);
+            }
+
             statusBar.textContent = 'Modified - Click Save Changes';
         }
 

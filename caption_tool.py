@@ -253,7 +253,33 @@ class CaptionTool:
                 'text': current_text
             })
 
-        return merged
+        # Post-process: Split any captions that still exceed max_words
+        # This handles cases where a single Whisper segment is already too long
+        final_segments = []
+        for segment in merged:
+            words = segment['text'].split()
+            if len(words) <= max_words:
+                final_segments.append(segment)
+            else:
+                # Split this segment into multiple parts
+                start_time = segment['start']
+                end_time = segment['end']
+                duration = end_time - start_time
+                time_per_word = duration / len(words)
+
+                # Split into chunks of max_words
+                for i in range(0, len(words), max_words):
+                    chunk_words = words[i:i + max_words]
+                    chunk_start = start_time + (i * time_per_word)
+                    chunk_end = start_time + ((i + len(chunk_words)) * time_per_word)
+
+                    final_segments.append({
+                        'start': chunk_start,
+                        'end': chunk_end,
+                        'text': ' '.join(chunk_words)
+                    })
+
+        return final_segments
 
     def generate_srt(self, segments, output_path, max_words=15):
         """
@@ -270,7 +296,14 @@ class CaptionTool:
         # Merge into sentence-level captions
         merged_segments = self.merge_segments_into_sentences(segments, max_words=max_words)
 
-        print(f"    Total captions: {len(merged_segments)}")
+        print(f"    Total captions generated: {len(merged_segments)}")
+
+        # Verify all captions respect max_words
+        long_captions = [seg for seg in merged_segments if len(seg['text'].split()) > max_words]
+        if long_captions:
+            print(f"    Warning: {len(long_captions)} captions exceed max_words (should have been split)")
+        else:
+            print(f"    ✓ All captions respect max_words limit")
 
         try:
             with open(output_path, 'w', encoding='utf-8') as f:

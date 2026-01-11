@@ -185,7 +185,7 @@ class CaptionTool:
 
         return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
-    def merge_segments_into_sentences(self, segments, max_duration=5.0, max_chars=84):
+    def merge_segments_into_sentences(self, segments, max_duration=5.0, max_chars=84, max_words=15):
         """
         Merge small segments into sentence-level captions
 
@@ -193,6 +193,7 @@ class CaptionTool:
             segments: List of word/phrase segments
             max_duration: Maximum duration for a single caption (seconds)
             max_chars: Maximum characters per caption line
+            max_words: Maximum words per caption line
 
         Returns:
             List of merged sentence segments
@@ -218,11 +219,13 @@ class CaptionTool:
             # Check if we should merge or create new segment
             potential_text = current_text + " " + text
             duration = segment.end - current_start
+            word_count = len(potential_text.split())
 
-            # Split if too long, too many chars, or sentence boundary
+            # Split if too long, too many chars, too many words, or sentence boundary
             should_split = (
                 duration > max_duration or
                 len(potential_text) > max_chars or
+                word_count > max_words or
                 (current_text and current_text[-1] in '.!?')
             )
 
@@ -252,18 +255,19 @@ class CaptionTool:
 
         return merged
 
-    def generate_srt(self, segments, output_path):
+    def generate_srt(self, segments, output_path, max_words=15):
         """
         Generate SRT file from transcription segments
 
         Args:
             segments: List of transcription segments
             output_path: Path to output SRT file
+            max_words: Maximum words per caption (default: 15)
         """
         print(f"\n[4/4] Generating SRT file...")
 
         # Merge into sentence-level captions
-        merged_segments = self.merge_segments_into_sentences(segments)
+        merged_segments = self.merge_segments_into_sentences(segments, max_words=max_words)
 
         print(f"    Total captions: {len(merged_segments)}")
 

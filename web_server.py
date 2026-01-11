@@ -45,7 +45,7 @@ def update_status(job_id, status, message, progress=0):
         }
 
 
-def process_video_background(job_id, video_path, language, model_name):
+def process_video_background(job_id, video_path, language, model_name, max_words=15):
     """Process video in background thread"""
     try:
         update_status(job_id, 'processing', 'Initializing...', 10)
@@ -76,7 +76,7 @@ def process_video_background(job_id, video_path, language, model_name):
 
         # Generate SRT
         output_srt = OUTPUT_FOLDER / f"{video_path.stem}.srt"
-        caption_tool.generate_srt(segments, output_srt)
+        caption_tool.generate_srt(segments, output_srt, max_words=max_words)
 
         # Cleanup
         if temp_audio.exists():
@@ -128,6 +128,7 @@ def upload_file():
         language = None
 
     model_name = request.form.get('model', 'base')
+    max_words = int(request.form.get('max_words', '15'))
 
     # Save file
     filename = secure_filename(file.filename)
@@ -142,7 +143,7 @@ def upload_file():
 
     thread = threading.Thread(
         target=process_video_background,
-        args=(job_id, filepath, language, model_name),
+        args=(job_id, filepath, language, model_name, max_words),
         daemon=True
     )
     thread.start()

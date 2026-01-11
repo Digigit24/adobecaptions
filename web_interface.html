@@ -781,6 +781,12 @@
                         </select>
                         <div class="model-info">💡 Larger = slower + accurate</div>
                     </div>
+                    <div class="setting-group">
+                        <label for="maxWordsUpload">Max Words/Caption</label>
+                        <input type="number" id="maxWordsUpload" value="15" min="5" max="50"
+                               style="width: 60px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        <div class="model-info">💡 Auto-split long captions</div>
+                    </div>
                 </div>
             </div>
 
@@ -901,7 +907,10 @@
             if (index < 0 || index >= captions.length) return;
 
             const caption = captions[index];
-            const words = caption.text.split(/\s+/);
+
+            // Get plain text without HTML tags
+            const plainText = caption.text.replace(/<[^>]*>/g, '');
+            const words = plainText.split(/\s+/).filter(w => w.length > 0);
 
             if (words.length < 2) {
                 alert('Caption must have at least 2 words to split');
@@ -962,21 +971,30 @@
         // Auto-split captions that exceed max words
         function autoSplitLongCaptions() {
             const maxWords = parseInt(maxWordsInput.value) || 15;
-            let modified = false;
+            let splitCount = 0;
+            let i = 0;
 
-            for (let i = 0; i < captions.length; i++) {
+            // Keep iterating until no more splits needed
+            while (i < captions.length) {
                 const caption = captions[i];
-                const words = caption.text.split(/\s+/);
+                // Get plain text, strip any HTML tags
+                const plainText = caption.text.replace(/<[^>]*>/g, '');
+                const words = plainText.split(/\s+/).filter(w => w.length > 0);
 
                 if (words.length > maxWords) {
                     splitCaption(null, i);
-                    modified = true;
-                    // Don't increment i because we just inserted a new caption
+                    splitCount++;
+                    // Don't increment i - check the first half again in case it's still too long
+                } else {
+                    i++; // Move to next caption
                 }
             }
 
-            if (modified) {
-                statusBar.textContent = `Auto-split ${modified} captions - Click Save`;
+            if (splitCount > 0) {
+                renderCaptions(); // Ensure everything is re-rendered
+                statusBar.textContent = `Auto-split ${splitCount} caption${splitCount > 1 ? 's' : ''} - Click Save`;
+            } else {
+                statusBar.textContent = 'No captions exceed max words';
             }
         }
 
@@ -1047,6 +1065,7 @@
             formData.append('video', currentFile);
             formData.append('language', document.getElementById('language').value);
             formData.append('model', document.getElementById('model').value);
+            formData.append('max_words', document.getElementById('maxWordsUpload').value);
 
             generateBtn.disabled = true;
             browseBtn.disabled = true;

@@ -68,3 +68,7 @@ desktop.ini
 # Testing
 test_videos/
 test_output/
+
+# Web interface uploads/outputs
+uploads/
+outputs/

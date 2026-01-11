@@ -18,7 +18,9 @@ Internal-use tool for generating SRT captions from video files with support for 
 - ✅ **One-click execution** via batch files
 - ✅ **Progress logging** and error handling
 - ✅ **GUI Application** with drag-and-drop and caption editor
+- ✅ **Web Interface** - browser-based with model accuracy selection
 - ✅ **Visual caption editor** for fixing spellings and timing
+- ✅ **Multiple model sizes** - Choose speed vs accuracy (Tiny/Base/Small/Medium)
 
 ---
 
@@ -49,6 +51,41 @@ python caption_gui.py
 5. Save and import to Premiere Pro
 
 **See [GUI_GUIDE.md](GUI_GUIDE.md) for detailed GUI documentation.**
+
+---
+
+## 🌐 Web Interface (Browser-Based)
+
+**NEW! Use the tool in your browser with model accuracy selection.**
+
+### Launch Web Server
+
+Double-click `start_web.bat` or run:
+```bash
+python web_server.py
+```
+
+Then open: **http://localhost:5000**
+
+### Features
+- 🌐 **Browser-based** - Works in Chrome, Firefox, Edge
+- 🎯 **Drag & drop** in browser
+- 📊 **Real-time progress** updates
+- ⚙️ **Model accuracy selection** (Tiny/Base/Small/Medium)
+- ✏️ **Online caption editor** with live editing
+- 💾 **Save & download** SRT files
+- 📱 **Mobile friendly** - Use from phone/tablet on same network
+
+### Quick Workflow
+1. Double-click `start_web.bat`
+2. Open http://localhost:5000 in browser
+3. Select **model accuracy** (Tiny = fast, Medium = best)
+4. Drag video file
+5. Click "Generate Captions"
+6. Edit in browser
+7. Download SRT file
+
+**See [WEB_GUIDE.md](WEB_GUIDE.md) for detailed web interface documentation.**
 
 ---
 

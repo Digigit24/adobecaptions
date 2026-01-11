@@ -1,0 +1,30 @@
+Adobe Premiere AI Captioning Tool
+Internal Use License
+
+Copyright (c) 2026
+
+INTERNAL USE ONLY
+
+This tool is developed for internal use only and is NOT licensed for distribution,
+commercial use, or public release.
+
+The tool makes use of the following open-source components:
+
+1. OpenAI Whisper
+   - License: MIT License
+   - https://github.com/openai/whisper
+
+2. faster-whisper (CTranslate2 backend)
+   - License: MIT License
+   - https://github.com/guillaumekln/faster-whisper
+
+3. FFmpeg
+   - License: LGPL/GPL (depending on build)
+   - https://ffmpeg.org/
+
+All third-party components retain their original licenses.
+
+This tool is provided "as is" without warranty of any kind, express or implied.
+Use at your own risk.
+
+For questions about licensing or usage rights, contact your legal/compliance team.

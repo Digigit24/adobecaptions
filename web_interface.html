@@ -636,67 +636,9 @@
             color: white;
         }
 
-        /* Transliteration Dropdown */
-        .transliteration-dropdown {
-            position: absolute;
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 10000;
-            display: none;
-            min-width: 200px;
-        }
-
-        .transliteration-dropdown.show {
-            display: block;
-        }
-
-        .transliteration-item {
-            padding: 8px 12px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.2s;
-        }
-
-        .transliteration-item:last-child {
-            border-bottom: none;
-        }
-
-        .transliteration-item:hover,
-        .transliteration-item.selected {
-            background: #667eea;
+        .btn-split {
+            background: #ff9800;
             color: white;
-        }
-
-        .transliteration-word {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .transliteration-latin {
-            font-size: 10px;
-            opacity: 0.7;
-        }
-
-        .transliteration-hint {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(102, 126, 234, 0.95);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 11px;
-            display: none;
-            z-index: 10001;
-        }
-
-        .transliteration-hint.show {
-            display: block;
         }
 
         /* Status Bar */
@@ -773,15 +715,8 @@
                             <div class="caption-count" id="captionCountSmall"></div>
                         </div>
                         <div class="editor-controls">
-                            <span class="style-label">Input:</span>
-                            <select class="editor-lang-select" id="editorLangSelect">
-                                <option value="none">English Only</option>
-                                <option value="hi">हिंदी Hindi</option>
-                                <option value="mr">मराठी Marathi</option>
-                                <option value="hi-en">Hinglish</option>
-                                <option value="mr-en">Marathi+English</option>
-                                <option value="mixed">Mixed</option>
-                            </select>
+                            <span class="style-label">Max Words:</span>
+                            <input type="number" class="editor-lang-select" id="maxWordsInput" value="15" min="5" max="50" style="width: 60px;">
                         </div>
                     </div>
                     <div class="style-controls">
@@ -873,14 +808,6 @@
         </div>
     </div>
 
-    <!-- Transliteration Dropdown -->
-    <div class="transliteration-dropdown" id="transliterationDropdown"></div>
-
-    <!-- Transliteration Hint -->
-    <div class="transliteration-hint" id="transliterationHint">
-        💡 Type in English to get Hindi/Marathi suggestions
-    </div>
-
     <script>
         let currentJobId = null;
         let currentFile = null;
@@ -916,13 +843,8 @@
         const videoProgress = document.getElementById('videoProgress');
         const videoProgressFill = document.getElementById('videoProgressFill');
 
-        // Transliteration Elements
-        const transliterationDropdown = document.getElementById('transliterationDropdown');
-        const transliterationHint = document.getElementById('transliterationHint');
-        const languageSelect = document.getElementById('language');
-
         // Editor Elements
-        const editorLangSelect = document.getElementById('editorLangSelect');
+        const maxWordsInput = document.getElementById('maxWordsInput');
         const textColorPicker = document.getElementById('textColorPicker');
         const fontSelect = document.getElementById('fontSelect');
         const applyStyleBtn = document.getElementById('applyStyleBtn');
@@ -933,364 +855,137 @@
         let currentEditingTextarea = null;
         let selectedTextRange = null;
 
-        // Transliteration Library - Hindi/Marathi Mapping
-        const transliterationMap = {
-            // Vowels
-            'a': ['अ', 'आ'], 'aa': ['आ'], 'aaa': ['आ'],
-            'i': ['इ', 'ई'], 'ii': ['ई'], 'ee': ['ई'],
-            'u': ['उ', 'ऊ'], 'uu': ['ऊ'], 'oo': ['ऊ'],
-            'e': ['ए', 'ऐ'], 'ai': ['ऐ'], 'ei': ['ऐ'],
-            'o': ['ओ', 'औ'], 'au': ['औ'], 'ou': ['औ'],
-
-            // Consonants
-            'ka': ['का', 'क'], 'kaa': ['का'], 'ki': ['कि', 'की'], 'kii': ['की'], 'ku': ['कु', 'कू'], 'kuu': ['कू'],
-            'ke': ['के', 'कै'], 'kai': ['कै'], 'ko': ['को', 'कौ'], 'kau': ['कौ'],
-            'k': ['क'], 'kh': ['ख'], 'kha': ['खा'], 'khi': ['खी'], 'khu': ['खु'], 'khe': ['खे'], 'kho': ['खो'],
-
-            'ga': ['गा', 'ग'], 'gaa': ['गा'], 'gi': ['गि', 'गी'], 'gii': ['गी'], 'gu': ['गु', 'गू'], 'guu': ['गू'],
-            'ge': ['गे', 'गै'], 'gai': ['गै'], 'go': ['गो', 'गौ'], 'gau': ['गौ'],
-            'g': ['ग'], 'gh': ['घ'], 'gha': ['घा'], 'ghi': ['घी'], 'ghu': ['घु'], 'ghe': ['घे'], 'gho': ['घो'],
-
-            'cha': ['चा', 'च'], 'chaa': ['चा'], 'chi': ['चि', 'ची'], 'chii': ['ची'], 'chu': ['चु', 'चू'], 'chuu': ['चू'],
-            'che': ['चे', 'चै'], 'chai': ['चै'], 'cho': ['चो', 'चौ'], 'chau': ['चौ'],
-            'ch': ['च'], 'chh': ['छ'], 'chha': ['छा'], 'chhi': ['छी'], 'chhu': ['छु'], 'chhe': ['छे'], 'chho': ['छो'],
-
-            'ja': ['जा', 'ज'], 'jaa': ['जा'], 'ji': ['जि', 'जी'], 'jii': ['जी'], 'ju': ['जु', 'जू'], 'juu': ['जू'],
-            'je': ['जे', 'जै'], 'jai': ['जै'], 'jo': ['जो', 'जौ'], 'jau': ['जौ'],
-            'j': ['ज'], 'jh': ['झ'], 'jha': ['झा'], 'jhi': ['झी'], 'jhu': ['झु'], 'jhe': ['झे'], 'jho': ['झो'],
-
-            'ta': ['टा', 'ता', 'ट', 'त'], 'taa': ['टा', 'ता'], 'ti': ['टि', 'ती', 'ति'], 'tii': ['टी', 'ती'],
-            'tu': ['टु', 'तु', 'टू', 'तू'], 'tuu': ['टू', 'तू'], 'te': ['टे', 'ते', 'टै', 'तै'], 'to': ['टो', 'तो', 'टौ', 'तौ'],
-            't': ['त', 'ट'], 'th': ['थ', 'ठ'], 'tha': ['था', 'ठा'], 'thi': ['थी', 'ठी'], 'thu': ['थु', 'ठु'],
-            'the': ['थे', 'ठे'], 'tho': ['थो', 'ठो'],
-
-            'da': ['डा', 'दा', 'ड', 'द'], 'daa': ['डा', 'दा'], 'di': ['डि', 'दि', 'डी', 'दी'], 'dii': ['डी', 'दी'],
-            'du': ['डु', 'दु', 'डू', 'दू'], 'duu': ['डू', 'दू'], 'de': ['डे', 'दे', 'डै', 'दै'], 'do': ['डो', 'दो', 'डौ', 'दौ'],
-            'd': ['द', 'ड'], 'dh': ['ध', 'ढ'], 'dha': ['धा', 'ढा'], 'dhi': ['धी', 'ढी'], 'dhu': ['धु', 'ढु'],
-            'dhe': ['धे', 'ढे'], 'dho': ['धो', 'ढो'],
-
-            'na': ['ना', 'न', 'णा', 'ण'], 'naa': ['ना', 'णा'], 'ni': ['नि', 'नी', 'णि', 'णी'], 'nii': ['नी', 'णी'],
-            'nu': ['नु', 'नू', 'णु', 'णू'], 'nuu': ['नू', 'णू'], 'ne': ['ने', 'नै', 'णे', 'णै'], 'no': ['नो', 'नौ', 'णो', 'णौ'],
-            'n': ['न', 'ण'],
-
-            'pa': ['पा', 'प'], 'paa': ['पा'], 'pi': ['पि', 'पी'], 'pii': ['पी'], 'pu': ['पु', 'पू'], 'puu': ['पू'],
-            'pe': ['पे', 'पै'], 'pai': ['पै'], 'po': ['पो', 'पौ'], 'pau': ['पौ'],
-            'p': ['प'], 'ph': ['फ'], 'pha': ['फा'], 'phi': ['फी'], 'phu': ['फु'], 'phe': ['फे'], 'pho': ['फो'],
-
-            'ba': ['बा', 'ब'], 'baa': ['बा'], 'bi': ['बि', 'बी'], 'bii': ['बी'], 'bu': ['बु', 'बू'], 'buu': ['बू'],
-            'be': ['बे', 'बै'], 'bai': ['बै'], 'bo': ['बो', 'बौ'], 'bau': ['बौ'],
-            'b': ['ब'], 'bh': ['भ'], 'bha': ['भा'], 'bhi': ['भी'], 'bhu': ['भु'], 'bhe': ['भे'], 'bho': ['भो'],
-
-            'ma': ['मा', 'म'], 'maa': ['मा'], 'mi': ['मि', 'मी'], 'mii': ['मी'], 'mu': ['मु', 'मू'], 'muu': ['मू'],
-            'me': ['मे', 'मै'], 'mai': ['मै'], 'mo': ['मो', 'मौ'], 'mau': ['मौ'],
-            'm': ['म'],
-
-            'ya': ['या', 'य'], 'yaa': ['या'], 'yi': ['यि', 'यी'], 'yii': ['यी'], 'yu': ['यु', 'यू'], 'yuu': ['यू'],
-            'ye': ['ये', 'यै'], 'yai': ['यै'], 'yo': ['यो', 'यौ'], 'yau': ['यौ'],
-            'y': ['य'],
-
-            'ra': ['रा', 'र'], 'raa': ['रा'], 'ri': ['रि', 'री'], 'rii': ['री'], 'ru': ['रु', 'रू'], 'ruu': ['रू'],
-            're': ['रे', 'रै'], 'rai': ['रै'], 'ro': ['रो', 'रौ'], 'rau': ['रौ'],
-            'r': ['र'],
-
-            'la': ['ला', 'ल'], 'laa': ['ला'], 'li': ['लि', 'ली'], 'lii': ['ली'], 'lu': ['लु', 'लू'], 'luu': ['लू'],
-            'le': ['ले', 'लै'], 'lai': ['लै'], 'lo': ['लो', 'लौ'], 'lau': ['लौ'],
-            'l': ['ल'],
-
-            'va': ['वा', 'व'], 'vaa': ['वा'], 'vi': ['वि', 'वी'], 'vii': ['वी'], 'vu': ['वु', 'वू'], 'vuu': ['वू'],
-            've': ['वे', 'वै'], 'vai': ['वै'], 'vo': ['वो', 'वौ'], 'vau': ['वौ'],
-            'v': ['व'], 'w': ['व'],
-
-            'sha': ['शा', 'श'], 'shaa': ['शा'], 'shi': ['शि', 'शी'], 'shii': ['शी'], 'shu': ['शु', 'शू'], 'shuu': ['शू'],
-            'she': ['शे', 'शै'], 'shai': ['शै'], 'sho': ['शो', 'शौ'], 'shau': ['शौ'],
-            'sh': ['श'],
-
-            'sa': ['सा', 'स'], 'saa': ['सा'], 'si': ['सि', 'सी'], 'sii': ['सी'], 'su': ['सु', 'सू'], 'suu': ['सू'],
-            'se': ['से', 'सै'], 'sai': ['सै'], 'so': ['सो', 'सौ'], 'sau': ['सौ'],
-            's': ['स'],
-
-            'ha': ['हा', 'ह'], 'haa': ['हा'], 'hi': ['हि', 'ही'], 'hii': ['ही'], 'hu': ['हु', 'हू'], 'huu': ['हू'],
-            'he': ['हे', 'है'], 'hai': ['है'], 'ho': ['हो', 'हौ'], 'hau': ['हौ'],
-            'h': ['ह'],
-
-            // Additional common combinations
-            'kya': ['क्या'], 'kyu': ['क्यू'], 'kyo': ['क्यो'],
-            'gya': ['ज्ञा'], 'gyan': ['ज्ञान'], 'gyaan': ['ज्ञान'],
-            'tra': ['त्रा'], 'tri': ['त्री'], 'tru': ['त्रू'],
-            'kshe': ['क्षे'], 'ksha': ['क्षा'], 'kshi': ['क्षी'], 'kshu': ['क्षु'],
-            'shr': ['श्र'], 'shri': ['श्री'], 'shree': ['श्री'],
-
-            // Common words
-            'namaste': ['नमस्ते'], 'namaskar': ['नमस्कार'], 'dhanyavad': ['धन्यवाद'], 'shukriya': ['शुक्रिया'],
-            'haan': ['हाँ'], 'ha': ['हाँ', 'हा'], 'nahi': ['नहीं'], 'nahin': ['नहीं'],
-            'kya': ['क्या'], 'kaise': ['कैसे'], 'kahan': ['कहाँ'], 'kab': ['कब'], 'kaun': ['कौन'],
-            'main': ['मैं'], 'mein': ['में'], 'tum': ['तुम'], 'aap': ['आप'],
-            'yeh': ['यह'], 'ye': ['यह', 'ये'], 'woh': ['वह'], 'wo': ['वह', 'वो'],
-            'hai': ['है'], 'hain': ['हैं'], 'tha': ['था'], 'thi': ['थी'], 'the': ['थे'],
-            'aur': ['और'], 'ya': ['या'], 'lekin': ['लेकिन'], 'par': ['पर'],
-            'ek': ['एक'], 'do': ['दो'], 'teen': ['तीन'], 'char': ['चार'], 'paanch': ['पांच']
-        };
-
-        // Transliteration state
-        let currentTranslitInput = null;
-        let currentTranslitWord = '';
-        let currentTranslitWordStart = 0;
-        let selectedSuggestionIndex = 0;
-
-        // Get transliteration suggestions for a word
-        function getTransliterationSuggestions(word) {
-            if (!word) return [];
-
-            const lowerWord = word.toLowerCase();
-            const suggestions = [];
-
-            // 1. Direct match - check if entire word exists
-            if (transliterationMap[lowerWord]) {
-                transliterationMap[lowerWord].forEach(hindi => {
-                    suggestions.push({ hindi, latin: lowerWord });
-                });
-            }
-
-            // 2. Build word by breaking into syllables (greedy longest match)
-            function buildWordFromSyllables(word) {
-                const results = [];
-
-                function buildRecursive(remaining, builtHindi, builtLatin) {
-                    if (remaining.length === 0) {
-                        if (builtHindi) {
-                            results.push({ hindi: builtHindi, latin: builtLatin });
-                        }
-                        return;
-                    }
-
-                    // Try matching from longest to shortest syllable
-                    let matched = false;
-                    for (let len = Math.min(remaining.length, 6); len > 0; len--) {
-                        const syllable = remaining.substring(0, len);
-                        if (transliterationMap[syllable]) {
-                            // Found a match, try all variations
-                            transliterationMap[syllable].forEach(hindiChar => {
-                                buildRecursive(
-                                    remaining.substring(len),
-                                    builtHindi + hindiChar,
-                                    builtLatin + syllable
-                                );
-                            });
-                            matched = true;
-                            break; // Use longest match (greedy)
-                        }
-                    }
-
-                    // If no match found, skip this character
-                    if (!matched && remaining.length > 0) {
-                        buildRecursive(
-                            remaining.substring(1),
-                            builtHindi + remaining[0],
-                            builtLatin + remaining[0]
-                        );
-                    }
-                }
-
-                buildRecursive(word, '', '');
-                return results;
-            }
-
-            // Build word from syllables if not a direct match
-            if (suggestions.length === 0) {
-                const syllableResults = buildWordFromSyllables(lowerWord);
-                syllableResults.forEach(result => {
-                    if (!suggestions.find(s => s.hindi === result.hindi)) {
-                        suggestions.push(result);
-                    }
-                });
-            }
-
-            // 3. Partial progressive match - show what's been typed so far
-            if (suggestions.length === 0) {
-                // Try to match prefixes
-                for (let len = lowerWord.length; len > 0; len--) {
-                    const prefix = lowerWord.substring(0, len);
-                    if (transliterationMap[prefix]) {
-                        transliterationMap[prefix].forEach(hindi => {
-                            const remaining = lowerWord.substring(len);
-                            suggestions.push({
-                                hindi: hindi + remaining,
-                                latin: prefix + (remaining ? ' + ' + remaining : '')
-                            });
-                        });
-                        if (suggestions.length > 0) break;
-                    }
-                }
-            }
-
-            // Remove duplicates and limit
-            const unique = [];
-            const seen = new Set();
-            suggestions.forEach(s => {
-                if (!seen.has(s.hindi)) {
-                    seen.add(s.hindi);
-                    unique.push(s);
-                }
-            });
-
-            return unique.slice(0, 8);
-        }
-
-        // Show transliteration dropdown
-        function showTransliterationDropdown(suggestions, textarea) {
-            if (suggestions.length === 0) {
-                transliterationDropdown.classList.remove('show');
+        // Word-level styling: Store styles per caption with HTML
+        function applyWordStyling() {
+            if (!currentEditingTextarea) {
+                alert('Please click Edit on a caption first');
                 return;
             }
 
-            // Build dropdown HTML
-            let html = '';
-            suggestions.forEach((suggestion, index) => {
-                const selected = index === selectedSuggestionIndex ? 'selected' : '';
-                html += `
-                    <div class="transliteration-item ${selected}" data-index="${index}">
-                        <div class="transliteration-word">${suggestion.hindi}</div>
-                        <div class="transliteration-latin">${suggestion.latin}</div>
-                    </div>
-                `;
-            });
-            transliterationDropdown.innerHTML = html;
+            const start = currentEditingTextarea.selectionStart;
+            const end = currentEditingTextarea.selectionEnd;
 
-            // Position dropdown near cursor
-            const rect = textarea.getBoundingClientRect();
-            transliterationDropdown.style.left = rect.left + 'px';
-            transliterationDropdown.style.top = (rect.bottom + 5) + 'px';
-            transliterationDropdown.classList.add('show');
+            if (start === end) {
+                alert('Please select some text to apply style');
+                return;
+            }
 
-            // Add click handlers
-            const items = transliterationDropdown.querySelectorAll('.transliteration-item');
-            items.forEach((item, index) => {
-                item.addEventListener('click', () => {
-                    selectTransliteration(index, suggestions, textarea);
-                });
-            });
+            const index = parseInt(currentEditingTextarea.dataset.index);
+            if (index < 0 || index >= captions.length) return;
+
+            const text = currentEditingTextarea.value;
+            const selectedText = text.substring(start, end);
+            const color = textColorPicker.value;
+            const font = fontSelect.value;
+
+            // Create styled HTML span
+            const styledHTML = `<span style="color:${color}; font-family:${font}">${selectedText}</span>`;
+
+            // Replace selected text with styled version
+            const before = text.substring(0, start);
+            const after = text.substring(end);
+            currentEditingTextarea.value = before + styledHTML + after;
+
+            // Store the styled HTML in caption
+            captions[index].styledText = currentEditingTextarea.value;
+
+            statusBar.textContent = 'Style applied - Click Save button (💾) to save';
         }
 
-        // Select a transliteration suggestion
-        function selectTransliteration(index, suggestions, textarea) {
-            if (index < 0 || index >= suggestions.length) return;
+        // Split caption into two captions
+        function splitCaption(event, index) {
+            if (event) {
+                event.stopPropagation();
+            }
 
-            const suggestion = suggestions[index];
-            const text = textarea.value;
-            const beforeWord = text.substring(0, currentTranslitWordStart);
-            const afterWord = text.substring(currentTranslitWordStart + currentTranslitWord.length);
+            if (index < 0 || index >= captions.length) return;
 
-            textarea.value = beforeWord + suggestion.hindi + afterWord;
+            const caption = captions[index];
+            const words = caption.text.split(/\s+/);
 
-            // Move cursor after inserted text
-            const newCursorPos = beforeWord.length + suggestion.hindi.length;
-            textarea.setSelectionRange(newCursorPos, newCursorPos);
+            if (words.length < 2) {
+                alert('Caption must have at least 2 words to split');
+                return;
+            }
 
-            // Hide dropdown
-            transliterationDropdown.classList.remove('show');
-            currentTranslitWord = '';
+            // Split at midpoint
+            const midpoint = Math.ceil(words.length / 2);
+            const firstHalf = words.slice(0, midpoint).join(' ');
+            const secondHalf = words.slice(midpoint).join(' ');
 
-            // Update caption
-            textarea.focus();
+            // Calculate time split
+            const startTime = timeToSeconds(caption.start);
+            const endTime = timeToSeconds(caption.end);
+            const duration = endTime - startTime;
+            const splitTime = startTime + (duration * midpoint / words.length);
+
+            // Update first caption
+            captions[index].text = firstHalf;
+            captions[index].end = secondsToTimestamp(splitTime);
+
+            // Create second caption
+            const newCaption = {
+                index: captions.length + 1,
+                start: secondsToTimestamp(splitTime),
+                end: caption.end,
+                text: secondHalf
+            };
+
+            // Insert new caption after current one
+            captions.splice(index + 1, 0, newCaption);
+
+            // Re-index all captions
+            captions.forEach((cap, i) => {
+                cap.index = i + 1;
+            });
+
+            renderCaptions();
+            captionCount.textContent = `${captions.length} captions`;
+            captionCountSmall.textContent = `${captions.length} captions`;
+            statusBar.textContent = `Split caption - Click Save`;
         }
 
-        // Navigate suggestions with arrow keys
-        function navigateSuggestions(direction, suggestions, textarea) {
-            if (suggestions.length === 0) return;
-
-            selectedSuggestionIndex += direction;
-            if (selectedSuggestionIndex < 0) selectedSuggestionIndex = suggestions.length - 1;
-            if (selectedSuggestionIndex >= suggestions.length) selectedSuggestionIndex = 0;
-
-            // Update UI
-            const items = transliterationDropdown.querySelectorAll('.transliteration-item');
-            items.forEach((item, index) => {
-                if (index === selectedSuggestionIndex) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
+        // Convert seconds to SRT timestamp
+        function secondsToTimestamp(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            const millis = Math.floor((seconds % 1) * 1000);
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(millis).padStart(3, '0')}`;
         }
 
-        // Attach transliteration to a textarea
-        function attachTransliteration(textarea) {
-            let suggestions = [];
+        // Auto-split captions that exceed max words
+        function autoSplitLongCaptions() {
+            const maxWords = parseInt(maxWordsInput.value) || 15;
+            let modified = false;
 
-            // Track current textarea being edited
-            currentEditingTextarea = textarea;
+            for (let i = 0; i < captions.length; i++) {
+                const caption = captions[i];
+                const words = caption.text.split(/\s+/);
 
-            textarea.addEventListener('input', (e) => {
-                const selectedLang = editorLangSelect.value;
-
-                // Only show transliteration for Hindi, Marathi, and mixed languages (not 'none')
-                if (selectedLang === 'none' || !['hi', 'mr', 'hi-en', 'mr-en', 'mixed'].includes(selectedLang)) {
-                    transliterationDropdown.classList.remove('show');
-                    transliterationHint.classList.remove('show');
-                    return;
+                if (words.length > maxWords) {
+                    splitCaption(null, i);
+                    modified = true;
+                    // Don't increment i because we just inserted a new caption
                 }
+            }
 
-                const cursorPos = textarea.selectionStart;
-                const text = textarea.value;
-
-                // Find current word
-                let wordStart = cursorPos - 1;
-                while (wordStart >= 0 && /[a-zA-Z]/.test(text[wordStart])) {
-                    wordStart--;
-                }
-                wordStart++;
-
-                let wordEnd = cursorPos;
-                while (wordEnd < text.length && /[a-zA-Z]/.test(text[wordEnd])) {
-                    wordEnd++;
-                }
-
-                const word = text.substring(wordStart, wordEnd);
-
-                if (word.length > 0 && /^[a-zA-Z]+$/.test(word)) {
-                    currentTranslitWord = word;
-                    currentTranslitWordStart = wordStart;
-                    currentTranslitInput = textarea;
-                    suggestions = getTransliterationSuggestions(word);
-                    selectedSuggestionIndex = 0;
-                    showTransliterationDropdown(suggestions, textarea);
-                    transliterationHint.classList.add('show');
-                } else {
-                    transliterationDropdown.classList.remove('show');
-                    transliterationHint.classList.remove('show');
-                }
-            });
-
-            textarea.addEventListener('keydown', (e) => {
-                const isDropdownVisible = transliterationDropdown.classList.contains('show');
-
-                if (!isDropdownVisible) return;
-
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    navigateSuggestions(1, suggestions, textarea);
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    navigateSuggestions(-1, suggestions, textarea);
-                } else if (e.key === 'Enter' || e.key === 'Tab') {
-                    if (suggestions.length > 0) {
-                        e.preventDefault();
-                        selectTransliteration(selectedSuggestionIndex, suggestions, textarea);
-                    }
-                } else if (e.key === 'Escape') {
-                    transliterationDropdown.classList.remove('show');
-                    transliterationHint.classList.remove('show');
-                }
-            });
-
-            // Hide dropdown on blur
-            textarea.addEventListener('blur', () => {
-                setTimeout(() => {
-                    transliterationDropdown.classList.remove('show');
-                    transliterationHint.classList.remove('show');
-                }, 200);
-            });
+            if (modified) {
+                statusBar.textContent = `Auto-split ${modified} captions - Click Save`;
+            }
         }
+
+        // Event listeners
+        applyStyleBtn.addEventListener('click', applyWordStyling);
+
+        // Auto-split when max words changes
+        maxWordsInput.addEventListener('change', () => {
+            if (captions.length > 0) {
+                if (confirm('Auto-split captions exceeding max words?')) {
+                    autoSplitLongCaptions();
+                }
+            }
+        });
 
         // Drag and drop
         dropZone.addEventListener('click', () => fileInput.click());
@@ -1433,16 +1128,23 @@
                 item.dataset.start = timeToSeconds(caption.start);
                 item.dataset.end = timeToSeconds(caption.end);
 
-                const words = caption.text.split(/\s+/);
-                const duration = timeToSeconds(caption.end) - timeToSeconds(caption.start);
-                const timePerWord = duration / words.length;
+                // If caption has styled text, use it; otherwise build word HTML
+                let displayHTML = '';
+                if (caption.styledText) {
+                    // Caption has inline styling (HTML)
+                    displayHTML = caption.styledText;
+                } else {
+                    // Regular caption - build word-by-word highlighting
+                    const words = caption.text.split(/\s+/);
+                    const duration = timeToSeconds(caption.end) - timeToSeconds(caption.start);
+                    const timePerWord = duration / words.length;
 
-                let wordHTML = '';
-                words.forEach((word, wordIndex) => {
-                    const wordStart = timeToSeconds(caption.start) + (wordIndex * timePerWord);
-                    const wordEnd = wordStart + timePerWord;
-                    wordHTML += `<span class="caption-word" data-word-start="${wordStart}" data-word-end="${wordEnd}">${word}</span> `;
-                });
+                    words.forEach((word, wordIndex) => {
+                        const wordStart = timeToSeconds(caption.start) + (wordIndex * timePerWord);
+                        const wordEnd = wordStart + timePerWord;
+                        displayHTML += `<span class="caption-word" data-word-start="${wordStart}" data-word-end="${wordEnd}">${word}</span> `;
+                    });
+                }
 
                 item.innerHTML = `
                     <div class="caption-header">
@@ -1454,10 +1156,11 @@
                                data-index="${index}" data-field="end">
                     </div>
                     <div class="caption-text-display" data-index="${index}">
-                        ${wordHTML}
+                        ${displayHTML}
                     </div>
                     <div class="caption-actions">
                         <button class="btn-small btn-edit" onclick="editCaption(event, ${index})">✏️ Edit</button>
+                        <button class="btn-small btn-split" onclick="splitCaption(event, ${index})">✂️ Split</button>
                         <button class="btn-small btn-delete" onclick="deleteCaption(event, ${index})">🗑️</button>
                     </div>
                 `;
@@ -1468,6 +1171,7 @@
                     if (!e.target.classList.contains('timestamp-input') &&
                         !e.target.classList.contains('btn-delete') &&
                         !e.target.classList.contains('btn-edit') &&
+                        !e.target.classList.contains('btn-split') &&
                         !e.target.classList.contains('caption-text') &&
                         !e.target.classList.contains('caption-text-display') &&
                         e.target.tagName !== 'TEXTAREA') {
@@ -1515,9 +1219,9 @@
                 saveCaption(index);
             };
 
-            // Attach transliteration to the new textarea
+            // Track current textarea for styling
             const textarea = item.querySelector('.caption-text');
-            attachTransliteration(textarea);
+            currentEditingTextarea = textarea;
             textarea.focus();
         }
 
@@ -1621,20 +1325,16 @@
             });
 
             if (activeCaption) {
-                videoCaptionText.textContent = activeCaption.text;
-
-                // Apply custom styles if they exist
-                if (activeCaption.color) {
-                    videoCaptionText.style.color = activeCaption.color;
+                // Use styledText if available (contains HTML), otherwise use plain text
+                if (activeCaption.styledText) {
+                    videoCaptionText.innerHTML = activeCaption.styledText;
                 } else {
-                    videoCaptionText.style.color = '#ffffff';
+                    videoCaptionText.textContent = activeCaption.text;
                 }
 
-                if (activeCaption.fontFamily) {
-                    videoCaptionText.style.fontFamily = activeCaption.fontFamily;
-                } else {
-                    videoCaptionText.style.fontFamily = "'Noto Sans Devanagari', sans-serif";
-                }
+                // Reset base styles (individual words may have their own)
+                videoCaptionText.style.color = '#ffffff';
+                videoCaptionText.style.fontFamily = "'Noto Sans Devanagari', sans-serif";
 
                 videoCaptionOverlay.style.display = 'block';
             } else {

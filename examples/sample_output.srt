@@ -1,0 +1,40 @@
+1
+00:00:00,000 --> 00:00:02,500
+Welcome to Adobe Premiere Pro captioning!
+
+2
+00:00:02,500 --> 00:00:05,800
+This is an example of English captions.
+
+3
+00:00:06,000 --> 00:00:09,200
+यह हिंदी कैप्शन का एक उदाहरण है।
+
+4
+00:00:09,500 --> 00:00:12,800
+हम यहाँ देवनागरी लिपि का उपयोग कर रहे हैं।
+
+5
+00:00:13,000 --> 00:00:16,500
+हे मराठी शीर्षकाचे उदाहरण आहे।
+
+6
+00:00:16,800 --> 00:00:20,000
+आम्ही देवनागरी लिपीचा वापर करत आहोत।
+
+7
+00:00:20,500 --> 00:00:24,000
+Captions are automatically generated using AI.
+
+8
+00:00:24,200 --> 00:00:28,500
+You can style these captions in Premiere Pro using Caption Style presets.
+
+9
+00:00:28,800 --> 00:00:32,000
+Recommended fonts: Noto Sans Devanagari, Hind, Mukta.
+
+10
+00:00:32,500 --> 00:00:35,800
+Enjoy creating professional captions for your videos!
+
